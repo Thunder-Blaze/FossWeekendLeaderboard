@@ -1,4 +1,3 @@
-export const REPOS_FILE_PATH = 'repos.txt';
 export const ACCEPTED_LABEL_PREFIXES = ['accepted-', 'issue-created'];
 export const CACHE_DURATION_SECONDS = 900; // 15 minutes
 export const GITHUB_API_URL = 'https://api.github.com/repos';

@@ -1,8 +1,6 @@
 import { env } from '$env/dynamic/private';
-import fs from 'fs';
-import path from 'path';
+import { REPOS } from '$lib/repos';
 import {
-	REPOS_FILE_PATH,
 	ACCEPTED_LABEL_PREFIXES,
 	GITHUB_API_URL,
 	ISSUES_PER_PAGE,
@@ -46,22 +44,7 @@ function parseRepoString(input: string): string {
 }
 
 export async function fetchReposList(): Promise<string[]> {
-	try {
-		const rawPath = path.resolve(process.cwd(), REPOS_FILE_PATH);
-		if (!fs.existsSync(rawPath)) {
-			console.warn(`Repos file not found at ${rawPath}. Returning empty list.`);
-			return [];
-		}
-		const text = fs.readFileSync(rawPath, 'utf-8');
-		return text
-			.split('\n')
-			.map((line) => line.trim())
-			.filter((line) => line.length > 0)
-			.map(parseRepoString);
-	} catch (error) {
-		console.error('Error reading repos file:', error);
-		return [];
-	}
+	return REPOS.map(parseRepoString);
 }
 
 export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntry[]; error?: string }> {
