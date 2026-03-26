@@ -43,7 +43,7 @@ function isWithinTimeRange(dateStr: string): boolean {
 }
 
 function parseRepoString(input: string | RepoConfig): string {
-    const name = typeof input === 'string' ? input : input.name;
+	const name = typeof input === 'string' ? input : input.name;
 	const trimmed = name.trim();
 	if (trimmed.startsWith('https://github.com/')) {
 		const parts = trimmed.replace('https://github.com/', '').split('/');
@@ -66,72 +66,105 @@ export async function fetchReposList(): Promise<string[]> {
 	return REPOS.map(parseRepoString);
 }
 
-async function fetchExternalBestPR(username: string, internalRepos: string[], headers: Record<string, string>): Promise<ContributionEntry | null> {
-    const now = Date.now();
-    const cached = externalCache.get(username);
-    if (cached && (now - cached.timestamp < EXTERNAL_CACHE_DURATION_SECONDS * 1000)) {
-        return cached.data;
-    }
+async function fetchExternalBestPR(
+	username: string,
+	internalRepos: string[],
+	headers: Record<string, string>
+): Promise<ContributionEntry | null> {
 
-    try {
-        // Fetch last 200 PRs (max 100 per page, but searching for 100 is usually enough for FOSS weekend context)
-        // We'll search for merged PRs authored by the user within the time range
-        const query = encodeURIComponent(`author:${username} type:pr is:merged created:${START_TIME_IST}..${END_TIME_IST}`);
-        const url = `https://api.github.com/search/issues?q=${query}&per_page=100`;
-        
-        const resp = await fetch(url, { headers });
-        if (!resp.ok) return null;
-        
-        const data = await resp.json();
-        const items = data.items || [];
-        
-        let bestPR: ContributionEntry | null = null;
-        let maxStars = -1;
+	const now = Date.now();
+	const cached = externalCache.get(username);
+	if (cached && (now - cached.timestamp < EXTERNAL_CACHE_DURATION_SECONDS * 1000)) {
+		return cached.data;
+	}
 
-        const internalRepoSet = new Set(internalRepos.map(r => r.toLowerCase()));
-
-        for (const item of items) {
-            const repoUrl = item.repository_url;
-            if (!repoUrl) continue;
-            
-            const repoParts = repoUrl.split('/');
-            const repoFullName = `${repoParts[repoParts.length - 2]}/${repoParts[repoParts.length - 1]}`;
-            
-            if (internalRepoSet.has(repoFullName.toLowerCase())) continue;
-
-            // Fetch repo details to get stars
-            const repoResp = await fetch(repoUrl, { headers });
-            if (!repoResp.ok) continue;
-            const repoData = await repoResp.json();
-            const stars = repoData.stargazers_count || 0;
-
-            if (stars >= 50 && stars > maxStars) {
-                maxStars = stars;
-                
-                let points = 0;
-                if (stars >= 1000) points = 100;
-                else if (stars >= 250) points = 60;
-                else if (stars >= 50) points = 40;
-
-                bestPR = {
-                    title: item.title,
-                    url: item.html_url,
-                    points: points,
-                    repo_name: repoFullName,
-                    issue_number: item.number,
-                    type: 'PR',
-                    isExternal: true,
-                    repoStars: stars
-                };
+	try {
+		const gqlQuery = `
+        query($queryString: String!) {
+          search(query: $queryString, type: ISSUE, first: 100) {
+            nodes {
+              ... on PullRequest {
+                title
+                url
+                number
+                repository {
+                  nameWithOwner
+                  stargazerCount
+                }
+              }
             }
-        }
+          }
+        }`;
 
-        externalCache.set(username, { data: bestPR, timestamp: now });
-        return bestPR;
-    } catch (e) {
-        console.error(`Error fetching external PRs for ${username}:`, e);
-        return null;
-    }
+		const queryString = `author:${username} is:pr is:merged created:${START_TIME_IST}..${END_TIME_IST}`;
+
+		console.log(`[EXTERNAL] GraphQL search for ${username}`);
+
+		const resp = await fetch("https://api.github.com/graphql", {
+			method: "POST",
+			headers: {
+				...headers,
+				Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				query: gqlQuery,
+				variables: { queryString }
+			}),
+		});
+
+		if (!resp.ok) {
+			console.error(`[EXTERNAL] GraphQL error for ${username}: ${resp.status}`);
+			return null;
+		}
+
+		const data = await resp.json();
+		const items = data.data?.search?.nodes || [];
+
+		console.log(`[EXTERNAL] Found ${items.length} PRs for ${username}`);
+
+		let bestPR: ContributionEntry | null = null;
+		let maxStars = -1;
+
+		const internalRepoSet = new Set(internalRepos.map(r => r.toLowerCase()));
+
+		for (const item of items) {
+			if (!item?.repository) continue;
+
+			const repoFullName = item.repository.nameWithOwner;
+
+			if (internalRepoSet.has(repoFullName.toLowerCase())) continue;
+
+			const stars = item.repository.stargazerCount;
+
+			if (stars >= 50 && stars > maxStars) {
+				maxStars = stars;
+
+				let points = 0;
+				if (stars >= 1000) points = 100;
+				else if (stars >= 250) points = 60;
+				else if (stars >= 50) points = 40;
+
+				bestPR = {
+					title: item.title,
+					url: item.url,
+					points,
+					repo_name: repoFullName,
+					issue_number: item.number,
+					type: 'PR',
+					isExternal: true,
+					repoStars: stars
+				};
+			}
+		}
+
+		externalCache.set(username, { data: bestPR, timestamp: now });
+		return bestPR;
+
+	} catch (e) {
+		console.error(`[EXTERNAL] Error for ${username}:`, e);
+		return null;
+	}
 }
 
 export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntry[]; error?: string }> {
@@ -199,8 +232,8 @@ export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntr
 
 		const isPR = !!item.pull_request || item.html_url.includes('/pull/');
 		const labels = item.labels || [];
-		
-		const acceptedLabel = labels.find((l: any) => 
+
+		const acceptedLabel = labels.find((l: any) =>
 			l.name && ACCEPTED_LABEL_PREFIXES.some(prefix => l.name.toLowerCase().includes(prefix.toLowerCase()))
 		);
 
@@ -237,10 +270,10 @@ export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntr
 				const repoConfig = repoConfigs.find(r => parseRepoString(r).toLowerCase() === repoName.toLowerCase());
 				const isSpecial = repoConfig?.special || false;
 
-                if (isSpecial && !userEntry.hasSpecialBonus) {
-                    userEntry.score += 20;
-                    userEntry.hasSpecialBonus = true;
-                }
+				if (isSpecial && !userEntry.hasSpecialBonus) {
+					userEntry.score += 20;
+					userEntry.hasSpecialBonus = true;
+				}
 
 				userEntry.contributions.push({
 					title: item.title,
@@ -257,20 +290,20 @@ export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntr
 	}
 
 	// Fetch external contributions for all users found
-	const externalPromises = Array.from(userMap.keys()).map(username => 
-        fetchExternalBestPR(username, repoList, headers)
-    );
-    
-    const externalResults = await Promise.all(externalPromises);
-    
-    let i = 0;
-    for (const [username, userEntry] of userMap.entries()) {
-        const externalPR = externalResults[i++];
-        if (externalPR) {
-            userEntry.score += externalPR.points;
-            userEntry.contributions.push(externalPR);
-        }
-    }
+	const externalPromises = Array.from(userMap.keys()).map(username =>
+		fetchExternalBestPR(username, repoList, headers)
+	);
+
+	const externalResults = await Promise.all(externalPromises);
+
+	let i = 0;
+	for (const [username, userEntry] of userMap.entries()) {
+		const externalPR = externalResults[i++];
+		if (externalPR) {
+			userEntry.score += externalPR.points;
+			userEntry.contributions.push(externalPR);
+		}
+	}
 
 	const results = Array.from(userMap.values());
 	results.sort((a, b) => b.score - a.score || a.username.localeCompare(b.username));

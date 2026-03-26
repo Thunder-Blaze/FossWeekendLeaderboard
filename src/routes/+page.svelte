@@ -29,7 +29,10 @@
 				score: aiContributions.reduce((sum: number, c: ContributionEntry) => sum + (c.isAI ? c.points : 0), 0)
 			};
 		}).filter((user: LeaderboardEntry | null): user is LeaderboardEntry => user !== null)
-		.filter((user: LeaderboardEntry) => user.username.toLowerCase().includes(searchTerm.toLowerCase()))
+		.filter((user: LeaderboardEntry) => 
+			user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			user.contributions.some(c => c.repo_name.toLowerCase().includes(searchTerm.toLowerCase()))
+		)
 	);
 
 	let topUser = $derived(filteredLeaderboard[0]);
@@ -162,7 +165,7 @@
 
 			<!-- Leaderboard List -->
 			<div class="flex w-full flex-col">
-				{#each rest as entry (entry.username)}
+				{#each searchTerm === '' ? rest : filteredLeaderboard as entry (entry.username)}
 					<!-- Find their absolute rank across the entire leaderboard -->
 					{@const absoluteRank =
 						leaderboard.findIndex((l: LeaderboardEntry) => l.username === entry.username) + 1}
