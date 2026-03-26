@@ -57,7 +57,7 @@ function parseRepoString(input: string | RepoConfig): string {
 			if (parts.length >= 2) {
 				return `${parts[0]}/${parts[1]}`;
 			}
-		} catch (e) {}
+		} catch (e) { }
 	}
 	return trimmed;
 }
@@ -97,13 +97,18 @@ async function fetchExternalBestPR(
 
 		const queryString = `author:${username} is:pr is:merged created:${START_TIME_IST}..${END_TIME_IST}`;
 
+		if (!env.GITHUB_TOKEN) {
+			console.error(`[EXTERNAL] GITHUB_TOKEN missing for GraphQL search`);
+			return null;
+		}
+
 		console.log(`[EXTERNAL] GraphQL search for ${username}`);
 
 		const resp = await fetch('https://api.github.com/graphql', {
 			method: 'POST',
 			headers: {
 				...headers,
-				Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+				Authorization: `Bearer ${env.GITHUB_TOKEN}`,
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
@@ -203,7 +208,7 @@ export async function fetchLeaderboard(): Promise<{
 				try {
 					const errorData = await response.json();
 					if (errorData.message) errorMessage = errorData.message;
-				} catch (e) {}
+				} catch (e) { }
 
 				if (status === 403 || status === 429) {
 					if (errorMessage.toLowerCase().includes('rate limit')) {
