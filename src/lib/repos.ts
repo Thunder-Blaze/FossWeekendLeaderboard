@@ -1,3 +1,8 @@
-export const REPOS = [
-	'iiitl/student-hub'
+export interface RepoConfig {
+	name: string;
+	special?: boolean;
+}
+
+export const REPOS: RepoConfig[] = [
+	{ name: 'iiitl/student-hub', special: true }
 ];

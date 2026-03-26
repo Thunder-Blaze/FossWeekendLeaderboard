@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { LeaderboardEntry } from '$lib/server/github';
+	import type { LeaderboardEntry, ContributionEntry } from '$lib/server/github';
 	import TopRank from '$lib/components/TopRank.svelte';
 	import LeaderboardCard from '$lib/components/LeaderboardCard.svelte';
 	import { invalidateAll } from '$app/navigation';
@@ -13,16 +13,27 @@
 	let { data } = $props<{ data: PageData }>();
 	let searchTerm = $state('');
 	let expandedUsername = $state<string | null>(null);
+	let showOnlyAI = $state(false);
 
 	let leaderboard = $derived(data.leaderboard || []);
-	let topUser = $derived(leaderboard[0]);
-	let rest = $derived(leaderboard.slice(1));
-
-	let filteredRest = $derived(
-		rest.filter((entry: LeaderboardEntry) =>
-			entry.username.toLowerCase().includes(searchTerm.toLowerCase())
-		)
+	
+	let filteredLeaderboard = $derived(
+		leaderboard.map((user: LeaderboardEntry) => {
+			if (!showOnlyAI) return user;
+			const aiContributions = user.contributions.filter(c => c.isAI);
+			if (aiContributions.length === 0) return null;
+			// Return a copy with only AI contributions and updated score for the filtered view
+			return {
+				...user,
+				contributions: aiContributions,
+				score: aiContributions.reduce((sum: number, c: ContributionEntry) => sum + (c.isAI ? c.points : 0), 0)
+			};
+		}).filter((user: LeaderboardEntry | null): user is LeaderboardEntry => user !== null)
+		.filter((user: LeaderboardEntry) => user.username.toLowerCase().includes(searchTerm.toLowerCase()))
 	);
+
+	let topUser = $derived(filteredLeaderboard[0]);
+	let rest = $derived(filteredLeaderboard.slice(1));
 
 	let interval: ReturnType<typeof setInterval>;
 
@@ -120,8 +131,8 @@
 				/>
 			{/if}
 
-			<!-- Search Bar -->
-			<div class="mb-10 flex w-full items-stretch gap-4">
+			<!-- Search Bar & Filters -->
+			<div class="mb-10 flex flex-col w-full gap-4 sm:flex-row sm:items-stretch">
 				<div class="relative flex-1">
 					<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5">
 						<svg class="h-6 w-6 text-zinc-500" viewBox="0 0 20 20" fill="currentColor">
@@ -139,11 +150,19 @@
 						class="block h-full w-full rounded-2xl border border-white/10 bg-[#1a1a1a] py-4 pr-5 pl-14 text-lg text-white placeholder-zinc-500 transition-all duration-300 focus:border-[#ccff00] focus:ring-1 focus:ring-[#ccff00] focus:outline-none"
 					/>
 				</div>
+
+				<button 
+					onclick={() => showOnlyAI = !showOnlyAI}
+					class="flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-6 py-4 transition-all duration-300 hover:bg-white/5 {showOnlyAI ? 'bg-purple-500/10 border-purple-500/50 text-purple-400' : 'bg-[#1a1a1a] text-zinc-400'}"
+				>
+					<span class="text-sm font-bold uppercase tracking-wider">AI Filter</span>
+					<div class="h-2 w-2 rounded-full {showOnlyAI ? 'bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'bg-zinc-600'}"></div>
+				</button>
 			</div>
 
 			<!-- Leaderboard List -->
 			<div class="flex w-full flex-col">
-				{#each filteredRest as entry (entry.username)}
+				{#each rest as entry (entry.username)}
 					<!-- Find their absolute rank across the entire leaderboard -->
 					{@const absoluteRank =
 						leaderboard.findIndex((l: LeaderboardEntry) => l.username === entry.username) + 1}

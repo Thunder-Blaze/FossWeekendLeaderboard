@@ -17,6 +17,21 @@
 			{entry.repo_name}
 		</a>
 		<div class="flex items-center gap-2">
+			{#if entry.isSpecial}
+				<span class="rounded-lg bg-yellow-500/20 px-2.5 py-1 text-[9px] font-black text-yellow-500">
+					SPECIAL
+				</span>
+			{/if}
+			{#if entry.isExternal}
+				<span class="rounded-lg bg-blue-500/20 px-2.5 py-1 text-[9px] font-black text-blue-400">
+					EXTERNAL {#if entry.repoStars}(★{entry.repoStars}){/if}
+				</span>
+			{/if}
+			{#if entry.isAI}
+				<span class="rounded-lg bg-purple-500/20 px-2.5 py-1 text-[9px] font-black text-purple-400">
+					AI
+				</span>
+			{/if}
 			<span
 				class="rounded-lg {entry.type === 'PR'
 					? 'bg-indigo-600'

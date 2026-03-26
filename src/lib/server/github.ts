@@ -1,11 +1,14 @@
 import { env } from '$env/dynamic/private';
-import { REPOS } from '$lib/repos';
+import { REPOS, type RepoConfig } from '$lib/repos';
 import {
 	ACCEPTED_LABEL_PREFIXES,
 	GITHUB_API_URL,
 	ISSUES_PER_PAGE,
 	MAX_PAGES_TO_FETCH,
-	IGNORED_AUTHOR_ASSOCIATIONS
+	IGNORED_AUTHOR_ASSOCIATIONS,
+	EXTERNAL_CACHE_DURATION_SECONDS,
+	START_TIME_IST,
+	END_TIME_IST
 } from '$lib/constants';
 
 export interface ContributionEntry {
@@ -15,6 +18,10 @@ export interface ContributionEntry {
 	repo_name: string;
 	issue_number: number;
 	type: 'PR' | 'Issue';
+	isAI?: boolean;
+	isExternal?: boolean;
+	isSpecial?: boolean;
+	repoStars?: number;
 }
 
 export interface LeaderboardEntry {
@@ -22,34 +29,115 @@ export interface LeaderboardEntry {
 	avatarUrl: string;
 	score: number;
 	contributions: ContributionEntry[];
+	hasSpecialBonus?: boolean;
 }
 
-function parseRepoString(input: string): string {
-	input = input.trim();
-	if (input.startsWith('https://github.com/')) {
-		const parts = input.replace('https://github.com/', '').split('/');
+// In-memory cache for external contributions
+const externalCache = new Map<string, { data: ContributionEntry | null; timestamp: number }>();
+
+function isWithinTimeRange(dateStr: string): boolean {
+	const date = new Date(dateStr);
+	const start = new Date(START_TIME_IST);
+	const end = new Date(END_TIME_IST);
+	return date >= start && date <= end;
+}
+
+function parseRepoString(input: string | RepoConfig): string {
+    const name = typeof input === 'string' ? input : input.name;
+	const trimmed = name.trim();
+	if (trimmed.startsWith('https://github.com/')) {
+		const parts = trimmed.replace('https://github.com/', '').split('/');
 		if (parts.length >= 2) {
 			return `${parts[0]}/${parts[1]}`;
 		}
-	} else if (input.startsWith('http')) {
+	} else if (trimmed.startsWith('http')) {
 		try {
-			const url = new URL(input);
+			const url = new URL(trimmed);
 			const parts = url.pathname.split('/').filter(Boolean);
 			if (parts.length >= 2) {
 				return `${parts[0]}/${parts[1]}`;
 			}
 		} catch (e) { }
 	}
-	return input;
+	return trimmed;
 }
 
 export async function fetchReposList(): Promise<string[]> {
 	return REPOS.map(parseRepoString);
 }
 
+async function fetchExternalBestPR(username: string, internalRepos: string[], headers: Record<string, string>): Promise<ContributionEntry | null> {
+    const now = Date.now();
+    const cached = externalCache.get(username);
+    if (cached && (now - cached.timestamp < EXTERNAL_CACHE_DURATION_SECONDS * 1000)) {
+        return cached.data;
+    }
+
+    try {
+        // Fetch last 200 PRs (max 100 per page, but searching for 100 is usually enough for FOSS weekend context)
+        // We'll search for merged PRs authored by the user within the time range
+        const query = encodeURIComponent(`author:${username} type:pr is:merged created:${START_TIME_IST}..${END_TIME_IST}`);
+        const url = `https://api.github.com/search/issues?q=${query}&per_page=100`;
+        
+        const resp = await fetch(url, { headers });
+        if (!resp.ok) return null;
+        
+        const data = await resp.json();
+        const items = data.items || [];
+        
+        let bestPR: ContributionEntry | null = null;
+        let maxStars = -1;
+
+        const internalRepoSet = new Set(internalRepos.map(r => r.toLowerCase()));
+
+        for (const item of items) {
+            const repoUrl = item.repository_url;
+            if (!repoUrl) continue;
+            
+            const repoParts = repoUrl.split('/');
+            const repoFullName = `${repoParts[repoParts.length - 2]}/${repoParts[repoParts.length - 1]}`;
+            
+            if (internalRepoSet.has(repoFullName.toLowerCase())) continue;
+
+            // Fetch repo details to get stars
+            const repoResp = await fetch(repoUrl, { headers });
+            if (!repoResp.ok) continue;
+            const repoData = await repoResp.json();
+            const stars = repoData.stargazers_count || 0;
+
+            if (stars >= 50 && stars > maxStars) {
+                maxStars = stars;
+                
+                let points = 0;
+                if (stars >= 1000) points = 100;
+                else if (stars >= 250) points = 60;
+                else if (stars >= 50) points = 40;
+
+                bestPR = {
+                    title: item.title,
+                    url: item.html_url,
+                    points: points,
+                    repo_name: repoFullName,
+                    issue_number: item.number,
+                    type: 'PR',
+                    isExternal: true,
+                    repoStars: stars
+                };
+            }
+        }
+
+        externalCache.set(username, { data: bestPR, timestamp: now });
+        return bestPR;
+    } catch (e) {
+        console.error(`Error fetching external PRs for ${username}:`, e);
+        return null;
+    }
+}
+
 export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntry[]; error?: string }> {
-	const repoList = await fetchReposList();
-	if (repoList.length === 0) return { leaderboard: [], error: 'No repositories found in repos.txt' };
+	const repoConfigs = REPOS;
+	const repoList = repoConfigs.map(parseRepoString);
+	if (repoList.length === 0) return { leaderboard: [], error: 'No repositories found' };
 
 	const headers: Record<string, string> = {
 		Accept: 'application/vnd.github.v3+json',
@@ -63,7 +151,6 @@ export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntr
 	const userMap = new Map<string, LeaderboardEntry>();
 	const respPromises: Promise<Response>[] = [];
 
-	// Use /issues endpoint as it returns both Issues and Pull Requests
 	for (const repo of repoList) {
 		for (let i = 1; i <= MAX_PAGES_TO_FETCH; i++) {
 			const url = `${GITHUB_API_URL}/${repo}/issues?state=all&per_page=${ISSUES_PER_PAGE}&page=${i}`;
@@ -79,35 +166,27 @@ export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntr
 			if (!response.ok) {
 				const status = response.status;
 				let errorMessage = `GitHub API error: ${status}`;
-
 				try {
 					const errorData = await response.json();
-					if (errorData.message) {
-						errorMessage = errorData.message;
-					}
-				} catch (e) {
-					// Fallback if JSON parsing fails
-				}
+					if (errorData.message) errorMessage = errorData.message;
+				} catch (e) { }
 
 				if (status === 403 || status === 429) {
 					if (errorMessage.toLowerCase().includes('rate limit')) {
-						errorOccurred = `GitHub API rate limit exceeded. Please try again later or provide a GITHUB_TOKEN.`;
+						errorOccurred = `GitHub API rate limit exceeded. Please try again later.`;
 					} else {
 						errorOccurred = errorMessage;
 					}
-				} else {
-					console.error(`Error fetching from GitHub: ${errorMessage}`);
 				}
 				return [];
 			}
 			return response.json();
 		})
 	);
+
 	let allItems: any[] = [];
 	for (const batch of allRepoData) {
-		if (Array.isArray(batch)) {
-			allItems = allItems.concat(batch);
-		}
+		if (Array.isArray(batch)) allItems = allItems.concat(batch);
 	}
 
 	const processedUrls = new Set<string>();
@@ -116,27 +195,20 @@ export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntr
 		if (!item.html_url || processedUrls.has(item.html_url)) continue;
 		processedUrls.add(item.html_url);
 
+		if (!isWithinTimeRange(item.created_at)) continue;
+
 		const isPR = !!item.pull_request || item.html_url.includes('/pull/');
-		const type = isPR ? 'PR' : 'Issue';
-
-		if (!item.labels || !Array.isArray(item.labels)) continue;
-
-		// Find any label that matches any of the accepted prefixes
-		const acceptedLabel = (item.labels || []).find((l: any) => 
+		const labels = item.labels || [];
+		
+		const acceptedLabel = labels.find((l: any) => 
 			l.name && ACCEPTED_LABEL_PREFIXES.some(prefix => l.name.toLowerCase().includes(prefix.toLowerCase()))
 		);
 
 		if (acceptedLabel) {
-			// Rule: Issues are skipped if authored by OWNER/COLLABORATOR as per hackathon rules
 			const isIgnoredAuthor = item.author_association && IGNORED_AUTHOR_ASSOCIATIONS.includes(item.author_association);
-			
-			if (!isPR && isIgnoredAuthor) {
-				continue;
-			}
+			if (!isPR && isIgnoredAuthor) continue;
 
-			const labelName = acceptedLabel.name.toLowerCase();
-			// Extract points: look for number after the prefix or anywhere in the label
-			const pointsMatch = labelName.match(/\d+/);
+			const pointsMatch = acceptedLabel.name.toLowerCase().match(/\d+/);
 			if (pointsMatch) {
 				const points = parseInt(pointsMatch[0], 10);
 				const login = item.user.login;
@@ -161,20 +233,47 @@ export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntr
 					repoName = item.html_url.split('/').slice(-4, -2).join('/');
 				}
 
+				const isAI = labels.some((l: any) => l.name && l.name.toLowerCase().includes('ai'));
+				const repoConfig = repoConfigs.find(r => parseRepoString(r).toLowerCase() === repoName.toLowerCase());
+				const isSpecial = repoConfig?.special || false;
+
+                if (isSpecial && !userEntry.hasSpecialBonus) {
+                    userEntry.score += 20;
+                    userEntry.hasSpecialBonus = true;
+                }
+
 				userEntry.contributions.push({
 					title: item.title,
 					url: item.html_url,
 					points: points,
 					repo_name: repoName,
 					issue_number: item.number,
-					type: type
+					type: isPR ? 'PR' : 'Issue',
+					isAI,
+					isSpecial
 				});
 			}
 		}
 	}
 
+	// Fetch external contributions for all users found
+	const externalPromises = Array.from(userMap.keys()).map(username => 
+        fetchExternalBestPR(username, repoList, headers)
+    );
+    
+    const externalResults = await Promise.all(externalPromises);
+    
+    let i = 0;
+    for (const [username, userEntry] of userMap.entries()) {
+        const externalPR = externalResults[i++];
+        if (externalPR) {
+            userEntry.score += externalPR.points;
+            userEntry.contributions.push(externalPR);
+        }
+    }
+
 	const results = Array.from(userMap.values());
-	results.sort((a, b) => b.score - a.score);
+	results.sort((a, b) => b.score - a.score || a.username.localeCompare(b.username));
 
 	return {
 		leaderboard: results,
