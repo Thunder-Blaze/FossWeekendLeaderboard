@@ -57,7 +57,7 @@ function parseRepoString(input: string | RepoConfig): string {
 			if (parts.length >= 2) {
 				return `${parts[0]}/${parts[1]}`;
 			}
-		} catch (e) { }
+		} catch (e) {}
 	}
 	return trimmed;
 }
@@ -71,10 +71,9 @@ async function fetchExternalBestPR(
 	internalRepos: string[],
 	headers: Record<string, string>
 ): Promise<ContributionEntry | null> {
-
 	const now = Date.now();
 	const cached = externalCache.get(username);
-	if (cached && (now - cached.timestamp < EXTERNAL_CACHE_DURATION_SECONDS * 1000)) {
+	if (cached && now - cached.timestamp < EXTERNAL_CACHE_DURATION_SECONDS * 1000) {
 		return cached.data;
 	}
 
@@ -100,17 +99,17 @@ async function fetchExternalBestPR(
 
 		console.log(`[EXTERNAL] GraphQL search for ${username}`);
 
-		const resp = await fetch("https://api.github.com/graphql", {
-			method: "POST",
+		const resp = await fetch('https://api.github.com/graphql', {
+			method: 'POST',
 			headers: {
 				...headers,
 				Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-				"Content-Type": "application/json",
+				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
 				query: gqlQuery,
 				variables: { queryString }
-			}),
+			})
 		});
 
 		if (!resp.ok) {
@@ -126,7 +125,7 @@ async function fetchExternalBestPR(
 		let bestPR: ContributionEntry | null = null;
 		let maxStars = -1;
 
-		const internalRepoSet = new Set(internalRepos.map(r => r.toLowerCase()));
+		const internalRepoSet = new Set(internalRepos.map((r) => r.toLowerCase()));
 
 		for (const item of items) {
 			if (!item?.repository) continue;
@@ -160,14 +159,16 @@ async function fetchExternalBestPR(
 
 		externalCache.set(username, { data: bestPR, timestamp: now });
 		return bestPR;
-
 	} catch (e) {
 		console.error(`[EXTERNAL] Error for ${username}:`, e);
 		return null;
 	}
 }
 
-export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntry[]; error?: string }> {
+export async function fetchLeaderboard(): Promise<{
+	leaderboard: LeaderboardEntry[];
+	error?: string;
+}> {
 	const repoConfigs = REPOS;
 	const repoList = repoConfigs.map(parseRepoString);
 	if (repoList.length === 0) return { leaderboard: [], error: 'No repositories found' };
@@ -202,7 +203,7 @@ export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntr
 				try {
 					const errorData = await response.json();
 					if (errorData.message) errorMessage = errorData.message;
-				} catch (e) { }
+				} catch (e) {}
 
 				if (status === 403 || status === 429) {
 					if (errorMessage.toLowerCase().includes('rate limit')) {
@@ -233,12 +234,17 @@ export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntr
 		const isPR = !!item.pull_request || item.html_url.includes('/pull/');
 		const labels = item.labels || [];
 
-		const acceptedLabel = labels.find((l: any) =>
-			l.name && ACCEPTED_LABEL_PREFIXES.some(prefix => l.name.toLowerCase().includes(prefix.toLowerCase()))
+		const acceptedLabel = labels.find(
+			(l: any) =>
+				l.name &&
+				ACCEPTED_LABEL_PREFIXES.some((prefix) =>
+					l.name.toLowerCase().includes(prefix.toLowerCase())
+				)
 		);
 
 		if (acceptedLabel) {
-			const isIgnoredAuthor = item.author_association && IGNORED_AUTHOR_ASSOCIATIONS.includes(item.author_association);
+			const isIgnoredAuthor =
+				item.author_association && IGNORED_AUTHOR_ASSOCIATIONS.includes(item.author_association);
 			if (!isPR && isIgnoredAuthor) continue;
 
 			const pointsMatch = acceptedLabel.name.toLowerCase().match(/\d+/);
@@ -267,7 +273,9 @@ export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntr
 				}
 
 				const isAI = labels.some((l: any) => l.name && l.name.toLowerCase().includes('ai'));
-				const repoConfig = repoConfigs.find(r => parseRepoString(r).toLowerCase() === repoName.toLowerCase());
+				const repoConfig = repoConfigs.find(
+					(r) => parseRepoString(r).toLowerCase() === repoName.toLowerCase()
+				);
 				const isSpecial = repoConfig?.special || false;
 
 				if (isSpecial && !userEntry.hasSpecialBonus) {
@@ -290,7 +298,7 @@ export async function fetchLeaderboard(): Promise<{ leaderboard: LeaderboardEntr
 	}
 
 	// Fetch external contributions for all users found
-	const externalPromises = Array.from(userMap.keys()).map(username =>
+	const externalPromises = Array.from(userMap.keys()).map((username) =>
 		fetchExternalBestPR(username, repoList, headers)
 	);
 

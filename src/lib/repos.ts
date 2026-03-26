@@ -3,6 +3,4 @@ export interface RepoConfig {
 	special?: boolean;
 }
 
-export const REPOS: RepoConfig[] = [
-	{ name: 'iiitl/student-hub', special: true }
-];
+export const REPOS: RepoConfig[] = [{ name: 'iiitl/student-hub', special: true }];

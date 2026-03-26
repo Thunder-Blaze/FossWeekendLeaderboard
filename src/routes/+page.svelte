@@ -16,23 +16,31 @@
 	let showOnlyAI = $state(false);
 
 	let leaderboard = $derived(data.leaderboard || []);
-	
+
 	let filteredLeaderboard = $derived(
-		leaderboard.map((user: LeaderboardEntry) => {
-			if (!showOnlyAI) return user;
-			const aiContributions = user.contributions.filter(c => c.isAI);
-			if (aiContributions.length === 0) return null;
-			// Return a copy with only AI contributions and updated score for the filtered view
-			return {
-				...user,
-				contributions: aiContributions,
-				score: aiContributions.reduce((sum: number, c: ContributionEntry) => sum + (c.isAI ? c.points : 0), 0)
-			};
-		}).filter((user: LeaderboardEntry | null): user is LeaderboardEntry => user !== null)
-		.filter((user: LeaderboardEntry) => 
-			user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			user.contributions.some(c => c.repo_name.toLowerCase().includes(searchTerm.toLowerCase()))
-		)
+		leaderboard
+			.map((user: LeaderboardEntry) => {
+				if (!showOnlyAI) return user;
+				const aiContributions = user.contributions.filter((c) => c.isAI);
+				if (aiContributions.length === 0) return null;
+				// Return a copy with only AI contributions and updated score for the filtered view
+				return {
+					...user,
+					contributions: aiContributions,
+					score: aiContributions.reduce(
+						(sum: number, c: ContributionEntry) => sum + (c.isAI ? c.points : 0),
+						0
+					)
+				};
+			})
+			.filter((user: LeaderboardEntry | null): user is LeaderboardEntry => user !== null)
+			.filter(
+				(user: LeaderboardEntry) =>
+					user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+					user.contributions.some((c) =>
+						c.repo_name.toLowerCase().includes(searchTerm.toLowerCase())
+					)
+			)
 	);
 
 	let topUser = $derived(filteredLeaderboard[0]);
@@ -119,7 +127,10 @@
 			</div>
 		{:else}
 			{#if $navigating}
-				<div class="fixed top-4 right-4 z-50 flex items-center gap-3 rounded-full bg-black/80 px-4 py-2 border border-white/10 backdrop-blur-md" transition:fade>
+				<div
+					class="fixed top-4 right-4 z-50 flex items-center gap-3 rounded-full border border-white/10 bg-black/80 px-4 py-2 backdrop-blur-md"
+					transition:fade
+				>
 					<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-[#ccff00]"></div>
 					<span class="text-xs font-medium text-[#ccff00]">Updating...</span>
 				</div>
@@ -127,15 +138,16 @@
 
 			<!-- Top 1 Display -->
 			{#if searchTerm === '' && topUser}
-				<TopRank 
-					user={topUser} 
+				<TopRank
+					user={topUser}
 					isExpanded={expandedUsername === topUser.username}
-					onToggle={() => expandedUsername = (expandedUsername === topUser.username ? null : topUser.username)}
+					onToggle={() =>
+						(expandedUsername = expandedUsername === topUser.username ? null : topUser.username)}
 				/>
 			{/if}
 
 			<!-- Search Bar & Filters -->
-			<div class="mb-10 flex flex-col w-full gap-4 sm:flex-row sm:items-stretch">
+			<div class="mb-10 flex w-full flex-col gap-4 sm:flex-row sm:items-stretch">
 				<div class="relative flex-1">
 					<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5">
 						<svg class="h-6 w-6 text-zinc-500" viewBox="0 0 20 20" fill="currentColor">
@@ -154,12 +166,18 @@
 					/>
 				</div>
 
-				<button 
-					onclick={() => showOnlyAI = !showOnlyAI}
-					class="flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-6 py-4 transition-all duration-300 hover:bg-white/5 {showOnlyAI ? 'bg-purple-500/10 border-purple-500/50 text-purple-400' : 'bg-[#1a1a1a] text-zinc-400'}"
+				<button
+					onclick={() => (showOnlyAI = !showOnlyAI)}
+					class="flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-6 py-4 transition-all duration-300 hover:bg-white/5 {showOnlyAI
+						? 'border-purple-500/50 bg-purple-500/10 text-purple-400'
+						: 'bg-[#1a1a1a] text-zinc-400'}"
 				>
-					<span class="text-sm font-bold uppercase tracking-wider">AI Filter</span>
-					<div class="h-2 w-2 rounded-full {showOnlyAI ? 'bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'bg-zinc-600'}"></div>
+					<span class="text-sm font-bold tracking-wider uppercase">AI Filter</span>
+					<div
+						class="h-2 w-2 rounded-full {showOnlyAI
+							? 'bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.5)]'
+							: 'bg-zinc-600'}"
+					></div>
 				</button>
 			</div>
 
@@ -170,16 +188,19 @@
 					{@const absoluteRank =
 						leaderboard.findIndex((l: LeaderboardEntry) => l.username === entry.username) + 1}
 					<div animate:flip={{ duration: 300 }} transition:fade>
-						<LeaderboardCard 
-							user={entry} 
-							rank={absoluteRank} 
+						<LeaderboardCard
+							user={entry}
+							rank={absoluteRank}
 							isExpanded={expandedUsername === entry.username}
-							onToggle={() => expandedUsername = (expandedUsername === entry.username ? null : entry.username)}
+							onToggle={() =>
+								(expandedUsername = expandedUsername === entry.username ? null : entry.username)}
 						/>
 					</div>
 				{:else}
 					{#if searchTerm !== ''}
-						<div class="rounded-2xl border border-white/5 bg-[#1a1a1a] p-8 text-center text-zinc-500">
+						<div
+							class="rounded-2xl border border-white/5 bg-[#1a1a1a] p-8 text-center text-zinc-500"
+						>
 							No matches found for "{searchTerm}"
 						</div>
 					{/if}
