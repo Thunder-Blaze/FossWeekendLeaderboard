@@ -9,7 +9,7 @@
 	href={entry.url}
 	target="_blank"
 	rel="noopener noreferrer"
-	class="group relative flex flex-col rounded-2xl border border-white/5 bg-bg-card p-5 text-white shadow-lg transition-all duration-300 ease-in-out hover:border-accent/30 hover:bg-bg-card-hover hover:shadow-2xl"
+	class="group relative flex flex-col rounded-2xl bg-bg-card p-5 text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-bg-card-hover hover:shadow-2xl"
 >
 	<div class="mb-3 flex w-full flex-wrap items-center justify-between gap-3 text-white">
 		<span

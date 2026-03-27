@@ -81,9 +81,23 @@
 		<header class="mb-8 space-y-3 text-center sm:mb-12">
 			<!-- Added some colorful circles in header if desired -->
 			<h1
-				class="rubik bg-gradient-to-r from-gradient-from to-gradient-to bg-clip-text text-4xl font-extrabold tracking-tight text-transparent drop-shadow-sm sm:text-5xl"
+				class="rubik bg-gradient-to-r from-gradient-from to-gradient-to bg-clip-text text-4xl font-bold tracking-tight text-transparent drop-shadow-sm sm:text-5xl"
 			>
-				Leaderboard <span class="text-4xl text-white">👑</span>
+				Leaderboard
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="lucide lucide-crown mb-1 ml-2 inline-block h-8 w-8 text-accent"
+				>
+					<path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
+				</svg>
 			</h1>
 			<p class="text-base font-medium text-white/50">
 				Tracking extraordinary open-source contributions
@@ -164,9 +178,7 @@
 						? 'border-purple-500/50 bg-purple-500/10 text-purple-400'
 						: 'bg-bg-container text-zinc-400'}"
 				>
-					<span class="jetbrains-mono text-sm font-bold tracking-wider uppercase"
-						>AI Filter</span
-					>
+					<span class="jetbrains-mono text-sm font-bold tracking-wider uppercase">AI Filter</span>
 					<div
 						class="h-2 w-2 rounded-full {showOnlyAI
 							? 'bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.5)]'

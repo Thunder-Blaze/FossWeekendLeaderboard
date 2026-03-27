@@ -13,9 +13,9 @@
 	--color-accent-60: rgba(77, 238, 234, 0.6);
 	--color-accent-80: rgba(77, 238, 234, 0.8);
 	--color-bg-base: #0b0f10;
-	--color-bg-card: #0d1214;
-	--color-bg-card-hover: #142125;
-	--color-bg-container: #162124;
+	--color-bg-card: #0a0e10ff;
+	--color-bg-card-hover: #0a2d3bff;
+	--color-bg-container: #0c1b20ff;
 	--color-bg-alt: #1a272b;
 	--color-bg-alt-hover: #1e2e33;
 	--color-gradient-from: #4deeea;
