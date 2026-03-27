@@ -44,7 +44,6 @@
 	);
 
 	let topUser = $derived(filteredLeaderboard[0]);
-	let rest = $derived(filteredLeaderboard.slice(1));
 
 	let interval: ReturnType<typeof setInterval>;
 
@@ -64,15 +63,13 @@
 </svelte:head>
 
 <!-- Outer background: super dark, nearly black -->
-<div
-	class="min-h-screen bg-[#0E0E11] font-sans text-white selection:bg-[#ccff00] selection:text-black"
->
+<div class="min-h-screen bg-bg-base font-sans text-white selection:bg-accent selection:text-black">
 	<!-- Floating visual decorative elements (from Image 3) -->
 	<div
-		class="pointer-events-none fixed top-10 left-[-2rem] h-20 w-20 rounded-full bg-[#ccff00] opacity-20 blur-xl"
+		class="pointer-events-none fixed top-10 left-[-2rem] h-20 w-20 rounded-full bg-accent opacity-20 blur-xl"
 	></div>
 	<div
-		class="pointer-events-none fixed top-[40%] right-[-1rem] flex h-16 w-16 rounded-full bg-[#ccff00] opacity-10 blur-lg"
+		class="pointer-events-none fixed top-[40%] right-[-1rem] flex h-16 w-16 rounded-full bg-accent opacity-10 blur-lg"
 	></div>
 	<div
 		class="pointer-events-none fixed bottom-20 left-10 h-10 w-10 rounded-full bg-cyan-400 text-transparent opacity-20 blur-md"
@@ -84,9 +81,9 @@
 		<header class="mb-8 space-y-3 text-center sm:mb-12">
 			<!-- Added some colorful circles in header if desired -->
 			<h1
-				class="bg-gradient-to-r from-[#94a3b8] to-[#f8fafc] bg-clip-text text-4xl font-extrabold tracking-tight text-transparent drop-shadow-sm sm:text-5xl"
+				class="rubik bg-gradient-to-r from-gradient-from to-gradient-to bg-clip-text text-4xl font-extrabold tracking-tight text-transparent drop-shadow-sm sm:text-5xl"
 			>
-				Leaderboard <span class="text-4xl">👑</span>
+				Leaderboard <span class="text-4xl text-white">👑</span>
 			</h1>
 			<p class="text-base font-medium text-white/50">
 				Tracking extraordinary open-source contributions
@@ -95,7 +92,7 @@
 
 		{#if data.error}
 			<div
-				class="flex flex-col items-center justify-center rounded-2xl border border-red-500/20 bg-[#1a1a1a] p-12 shadow-2xl"
+				class="flex flex-col items-center justify-center rounded-2xl border border-red-500/20 bg-bg-container p-12 shadow-2xl"
 			>
 				<div class="mb-4 text-4xl text-red-500">⚠️</div>
 				<h2 class="mb-2 text-xl font-bold text-white">GitHub API Error</h2>
@@ -109,11 +106,11 @@
 			</div>
 		{:else if leaderboard.length === 0}
 			<div
-				class="flex flex-col items-center justify-center rounded-2xl border border-white/5 bg-[#1a1a1a] p-12 shadow-2xl"
+				class="flex flex-col items-center justify-center rounded-2xl border border-white/5 bg-bg-container p-12 shadow-2xl"
 			>
 				{#if $navigating}
-					<div class="mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-[#ccff00]"></div>
-					<p class="text-[#ccff00]/80">Synchronizing with GitHub...</p>
+					<div class="mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-accent"></div>
+					<p class="text-accent-80">Synchronizing with GitHub...</p>
 				{:else}
 					<div class="mb-4 text-4xl opacity-50">📊</div>
 					<p class="text-white/50">No data for statistics</p>
@@ -131,19 +128,14 @@
 					class="fixed top-4 right-4 z-50 flex items-center gap-3 rounded-full border border-white/10 bg-black/80 px-4 py-2 backdrop-blur-md"
 					transition:fade
 				>
-					<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-[#ccff00]"></div>
-					<span class="text-xs font-medium text-[#ccff00]">Updating...</span>
+					<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-accent"></div>
+					<span class="jetbrains-mono text-xs font-medium text-accent">Updating...</span>
 				</div>
 			{/if}
 
 			<!-- Top 1 Display -->
 			{#if searchTerm === '' && topUser}
-				<TopRank
-					user={topUser}
-					isExpanded={expandedUsername === topUser.username}
-					onToggle={() =>
-						(expandedUsername = expandedUsername === topUser.username ? null : topUser.username)}
-				/>
+				<TopRank user={topUser} />
 			{/if}
 
 			<!-- Search Bar & Filters -->
@@ -162,7 +154,7 @@
 						type="text"
 						bind:value={searchTerm}
 						placeholder="Search a contributor..."
-						class="block h-full w-full rounded-2xl border border-white/10 bg-[#1a1a1a] py-4 pr-5 pl-14 text-lg text-white placeholder-zinc-500 transition-all duration-300 focus:border-[#ccff00] focus:ring-1 focus:ring-[#ccff00] focus:outline-none"
+						class="jetbrains-mono block h-full w-full rounded-2xl border border-white/10 bg-bg-container py-4 pr-5 pl-14 text-lg text-white placeholder-zinc-500 transition-all duration-300 focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
 					/>
 				</div>
 
@@ -170,9 +162,11 @@
 					onclick={() => (showOnlyAI = !showOnlyAI)}
 					class="flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-6 py-4 transition-all duration-300 hover:bg-white/5 {showOnlyAI
 						? 'border-purple-500/50 bg-purple-500/10 text-purple-400'
-						: 'bg-[#1a1a1a] text-zinc-400'}"
+						: 'bg-bg-container text-zinc-400'}"
 				>
-					<span class="text-sm font-bold tracking-wider uppercase">AI Filter</span>
+					<span class="jetbrains-mono text-sm font-bold tracking-wider uppercase"
+						>AI Filter</span
+					>
 					<div
 						class="h-2 w-2 rounded-full {showOnlyAI
 							? 'bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.5)]'
@@ -183,7 +177,7 @@
 
 			<!-- Leaderboard List -->
 			<div class="flex w-full flex-col">
-				{#each searchTerm === '' ? rest : filteredLeaderboard as entry (entry.username)}
+				{#each filteredLeaderboard as entry (entry.username)}
 					<!-- Find their absolute rank across the entire leaderboard -->
 					{@const absoluteRank =
 						leaderboard.findIndex((l: LeaderboardEntry) => l.username === entry.username) + 1}
@@ -199,7 +193,7 @@
 				{:else}
 					{#if searchTerm !== ''}
 						<div
-							class="rounded-2xl border border-white/5 bg-[#1a1a1a] p-8 text-center text-zinc-500"
+							class="rounded-2xl border border-white/5 bg-bg-container p-8 text-center text-zinc-500"
 						>
 							No matches found for "{searchTerm}"
 						</div>
@@ -216,7 +210,7 @@
 					href={HOMEPAGE_URL}
 					target="_blank"
 					rel="noopener noreferrer"
-					class="text-zinc-400 transition-colors hover:text-[#ccff00] hover:underline"
+					class="text-zinc-400 transition-colors hover:text-accent hover:underline"
 				>
 					FOSS Weekend Homepage
 				</a>

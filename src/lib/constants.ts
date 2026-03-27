@@ -17,3 +17,12 @@ export const EXTERNAL_CACHE_DURATION_SECONDS = 3600; // 1 hour
 // Example: '2025-01-24T18:00:00+05:30'
 export const START_TIME_IST = '2025-01-24T18:00:00+05:30';
 export const END_TIME_IST = '2026-05-27T08:00:00+05:30';
+
+export const TAG_COLORS = {
+	SPECIAL: 'bg-amber-200',
+	EXTERNAL: 'bg-sky-200',
+	AI: 'bg-fuchsia-200',
+	PR: 'bg-violet-200',
+	ISSUE: 'bg-cyan-200',
+	PTS: 'bg-accent'
+} as const;

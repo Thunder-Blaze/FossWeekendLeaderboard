@@ -281,6 +281,9 @@ export async function fetchLeaderboard(): Promise<{
 				const repoConfig = repoConfigs.find(
 					(r) => parseRepoString(r).toLowerCase() === repoName.toLowerCase()
 				);
+				
+				// Use the name from config to preserve casing if available
+				const finalRepoName = repoConfig ? repoConfig.name : repoName;
 				const isSpecial = repoConfig?.special || false;
 
 				if (isSpecial && !userEntry.hasSpecialBonus) {
@@ -292,7 +295,7 @@ export async function fetchLeaderboard(): Promise<{
 					title: item.title,
 					url: item.html_url,
 					points: points,
-					repo_name: repoName,
+					repo_name: finalRepoName,
 					issue_number: item.number,
 					type: isPR ? 'PR' : 'Issue',
 					isAI,

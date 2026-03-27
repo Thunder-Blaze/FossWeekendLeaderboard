@@ -1,3 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+@theme {
+	--font-sans: 'Rubik', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+		'Segoe UI Symbol', 'Noto Color Emoji';
+	--font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+		'Liberation Mono', 'Courier New', monospace;
+
+	--color-accent: #4deeea;
+	--color-accent-60: rgba(77, 238, 234, 0.6);
+	--color-accent-80: rgba(77, 238, 234, 0.8);
+	--color-bg-base: #0b0f10;
+	--color-bg-card: #0d1214;
+	--color-bg-card-hover: #142125;
+	--color-bg-container: #162124;
+	--color-bg-alt: #1a272b;
+	--color-bg-alt-hover: #1e2e33;
+	--color-gradient-from: #4deeea;
+	--color-gradient-to: #74ebd5;
+}
+
+html,
+body {
+	background: var(--color-bg-base);
+	font-family: 'Rubik', sans-serif;
+	font-optical-sizing: auto;
+}
+
+.mono-tag {
+	font-family: 'JetBrains Mono', monospace;
+	font-optical-sizing: auto;
+	font-weight: 800;
+	font-style: normal;
+}
+
+.rubik {
+	font-family: 'Rubik', sans-serif;
+	font-optical-sizing: auto;
+	font-style: normal;
+}
+
+.jetbrains-mono {
+	font-family: 'JetBrains Mono', monospace;
+	font-optical-sizing: auto;
+	font-style: normal;
+}

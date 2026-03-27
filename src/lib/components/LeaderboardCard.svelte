@@ -10,21 +10,24 @@
 		onToggle: () => void;
 	}>();
 
+	let isRank1 = $derived(rank === 1);
 	let isRank2 = $derived(rank === 2);
 	let isRank3 = $derived(rank === 3);
 
 	let borderStyle = $derived(
-		isRank2
-			? 'border border-gray-300/20'
-			: isRank3
-				? 'border border-amber-600/20'
-				: 'border border-white/5'
+		isRank1
+			? 'border border-accent/30'
+			: isRank2
+				? 'border border-accent/20'
+				: isRank3
+					? 'border border-accent/10'
+					: 'border border-white/5'
 	);
 
 	let cardClass = $derived(
 		isExpanded
-			? 'bg-[#1a1a1a] hover:bg-[#1a1a1a] shadow-2xl scale-[1.01]'
-			: 'bg-[#18181b] hover:bg-[#202023]'
+			? 'bg-bg-container hover:bg-bg-container shadow-2xl scale-[1.01]'
+			: 'bg-bg-alt hover:bg-bg-alt-hover'
 	);
 </script>
 
@@ -32,59 +35,66 @@
 	class="mb-4 overflow-hidden rounded-[2rem] transition-all duration-300 {cardClass} {borderStyle} text-white"
 >
 	<button
-		class="flex w-full cursor-pointer items-center justify-between rounded-[2rem] p-4 px-6 text-left focus:outline-none sm:px-8"
+		class="flex w-full cursor-pointer items-center justify-between rounded-[2rem] bg-bg-container p-7 px-6 text-left focus:outline-none sm:px-8"
 		onclick={onToggle}
 	>
 		<div class="flex w-3/4 items-center gap-4 sm:gap-6">
-			{#if user.avatarUrl}
-				<img
-					src={user.avatarUrl}
-					alt={user.username}
-					class="h-12 w-12 flex-shrink-0 rounded-full object-cover shadow-lg sm:h-16 sm:w-16
-					{isRank2
-						? 'ring-2 ring-gray-300 ring-offset-2 ring-offset-transparent'
-						: isRank3
-							? 'ring-2 ring-amber-600 ring-offset-2 ring-offset-transparent'
-							: 'border border-white/5'}"
-				/>
-			{:else}
+			<a
+				href="https://github.com/{user.username}"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="relative z-10 flex-shrink-0"
+				onclick={(e) => e.stopPropagation()}
+			>
 				<div
-					class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[#ccff00] text-black shadow-lg sm:h-16 sm:w-16"
+					class="relative h-10 w-10 overflow-hidden rounded-full border-2 border-accent/20 transition-transform duration-300 hover:scale-110 sm:h-14 sm:w-14"
 				>
-					<span class="text-lg font-black">{user.username.substring(0, 2).toUpperCase()}</span>
+					{#if user.avatarUrl}
+						<img src={user.avatarUrl} alt={user.username} class="h-full w-full object-cover" />
+					{:else}
+						<div
+							class="flex h-full w-full items-center justify-center bg-accent text-xl font-bold text-black sm:text-2xl"
+						>
+							{user.username.substring(0, 2).toUpperCase()}
+						</div>
+					{/if}
 				</div>
-			{/if}
+			</a>
 			<div class="overflow-hidden">
-				<h3 class="truncate text-lg font-bold tracking-tight sm:text-2xl">{user.username}</h3>
-				<p class="mt-0.5 text-xs font-bold text-[#ccff00] sm:text-sm">{user.score} points</p>
+				<h3 class="rubik truncate text-lg font-bold tracking-tight sm:text-2xl">{user.username}</h3>
+				<p class="jetbrains-mono mt-0.5 text-xs font-bold text-accent-80 sm:text-sm">
+					{user.score} points
+				</p>
 			</div>
 		</div>
 
 		<div
-			class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-base font-black shadow-inner transition-transform duration-300 sm:h-14 sm:w-14 sm:text-xl
-			{isRank2
-				? 'bg-gradient-to-br from-gray-100 to-gray-400 text-gray-900'
-				: isRank3
-					? 'bg-gradient-to-br from-amber-400 to-amber-700 text-amber-50'
-					: 'bg-white/5 text-gray-400'}"
+			class="jetbrains-mono flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-base font-black shadow-inner transition-transform duration-300 sm:h-14 sm:w-14 sm:text-xl
+			{isRank1
+				? 'scale-110 bg-accent text-black shadow-[0_0_20px_rgba(77,238,234,0.5)]'
+				: isRank2
+					? 'bg-accent-80 text-black shadow-[0_0_15px_rgba(77,238,234,0.3)]'
+					: isRank3
+						? 'bg-accent-60 text-black/80'
+						: 'bg-white/5 text-gray-400'}"
 		>
 			{rank}
 		</div>
 	</button>
 
 	{#if isExpanded}
-		<div transition:slide={{ duration: 300 }} class="px-5 pb-6 sm:px-8">
+		<div transition:slide={{ duration: 300 }} class="bg-bg-container/50 px-4 pb-6 sm:px-8">
 			<div class="mb-4 flex items-center gap-3">
-				<div class="h-px flex-1 bg-white/10"></div>
-				<h4 class="text-[10px] font-black tracking-[0.2em] text-white/20 uppercase">
+				<div class="h-px flex-1 bg-white/5"></div>
+				<span class="text-[10px] font-black tracking-[0.2em] text-white/20 uppercase">
 					Contributions
-				</h4>
-				<div class="h-px flex-1 bg-white/10"></div>
+				</span>
+				<div class="h-px flex-1 bg-white/5"></div>
 			</div>
 
 			{#if user.contributions.length > 0}
-				<div class="grid gap-3">
-					{#each user.contributions as entry}
+				<div class="grid gap-3 sm:gap-4">
+					{#each user.contributions as entry (entry.url)}
 						<ContributionItem {entry} />
 					{/each}
 				</div>
