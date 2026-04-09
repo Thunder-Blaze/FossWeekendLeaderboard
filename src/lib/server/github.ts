@@ -19,6 +19,7 @@ export interface ContributionEntry {
     issue_number: number;
     type: 'PR' | 'Issue';
     isAI: boolean;
+    createdAt: string;
     specialTag?: string;
     specialPoints?: number;
 }
@@ -62,6 +63,7 @@ export interface LeaderboardEntry {
     username: string;
     avatarUrl: string;
     score: number;
+    lastContributionTime: number;
     contributions: ContributionEntry[];
     // hasSpecialBonus?: boolean;
 }
@@ -417,11 +419,16 @@ export async function fetchLeaderboard(): Promise<{
                         username: login,
                         avatarUrl: node.author.avatarUrl,
                         score: 0,
+                        lastContributionTime: 0,
                         contributions: []
                     });
                 }
 
                 const userEntry = userMap.get(login)!;
+                const submissionTime = new Date(node.createdAt).getTime();
+                if (submissionTime > userEntry.lastContributionTime) {
+                    userEntry.lastContributionTime = submissionTime;
+                }
                 
                 const repoConfig = repoConfigs.find(
                     (r) => parseRepoString(r).toLowerCase() === repoNameWithOwner
@@ -457,6 +464,7 @@ export async function fetchLeaderboard(): Promise<{
                     issue_number: node.number,
                     type: isPR ? 'PR' : 'Issue',
                     isAI: labels.some((l) => l.name && l.name.toLowerCase().includes('ai')),
+                    createdAt: node.createdAt,
                     specialTag,
                     specialPoints
                 });
@@ -479,7 +487,11 @@ export async function fetchLeaderboard(): Promise<{
     }
 
     const results = Array.from(userMap.values());
-    results.sort((a, b) => b.score - a.score || a.username.localeCompare(b.username));
+    results.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        // Tie-breaker: earlier last submission wins
+        return a.lastContributionTime - b.lastContributionTime || a.username.localeCompare(b.username);
+    });
 
     return {
         leaderboard: results,
