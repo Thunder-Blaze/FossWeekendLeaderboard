@@ -6,7 +6,7 @@ import {
 	ISSUES_PER_PAGE,
 	MAX_PAGES_TO_FETCH,
 	IGNORED_AUTHOR_ASSOCIATIONS,
-	EXTERNAL_CACHE_DURATION_SECONDS,
+	SPECIAL_LABEL_PREFIX,
 	START_TIME_IST,
 	END_TIME_IST
 } from '$lib/constants';
@@ -19,9 +19,10 @@ export interface ContributionEntry {
 	issue_number: number;
 	type: 'PR' | 'Issue';
 	isAI?: boolean;
-	isExternal?: boolean;
-	isSpecial?: boolean;
-	repoStars?: number;
+	// isExternal?: boolean;
+	specialTag?: string;
+	specialPoints?: number;
+	// repoStars?: number;
 }
 
 export interface LeaderboardEntry {
@@ -29,11 +30,11 @@ export interface LeaderboardEntry {
 	avatarUrl: string;
 	score: number;
 	contributions: ContributionEntry[];
-	hasSpecialBonus?: boolean;
+	// hasSpecialBonus?: boolean;
 }
 
 // In-memory cache for external contributions
-const externalCache = new Map<string, { data: ContributionEntry | null; timestamp: number }>();
+// const externalCache = new Map<string, { data: ContributionEntry | null; timestamp: number }>();
 
 function isWithinTimeRange(dateStr: string): boolean {
 	const date = new Date(dateStr);
@@ -66,6 +67,7 @@ export async function fetchReposList(): Promise<string[]> {
 	return REPOS.map(parseRepoString);
 }
 
+/*
 async function fetchExternalBestPR(
 	username: string,
 	internalRepos: string[],
@@ -169,6 +171,7 @@ async function fetchExternalBestPR(
 		return null;
 	}
 }
+*/
 
 export async function fetchLeaderboard(): Promise<{
 	leaderboard: LeaderboardEntry[];
@@ -303,12 +306,24 @@ export async function fetchLeaderboard(): Promise<{
 				);
 				
 				const finalRepoName = repoConfig ? repoConfig.name : repoName;
-				const isSpecial = repoConfig?.special || false;
+				const isSpecialRepo = repoConfig?.special || false;
+				let specialPoints = 0;
+				let specialTag = undefined;
 
-				if (isSpecial && !userEntry.hasSpecialBonus) {
-					userEntry.score += 20;
-					userEntry.hasSpecialBonus = true;
+				if (isSpecialRepo) {
+					const specialLabel = labels.find((l: any) =>
+						l.name && l.name.toLowerCase().startsWith(SPECIAL_LABEL_PREFIX.toLowerCase())
+					);
+					if (specialLabel) {
+						specialTag = specialLabel.name;
+						const match = specialTag.match(new RegExp(`${SPECIAL_LABEL_PREFIX}(\\d+)`, 'i'));
+						if (match) {
+							specialPoints = parseInt(match[1], 10);
+						}
+					}
 				}
+
+				userEntry.score += specialPoints;
 
 				userEntry.contributions.push({
 					title: item.title,
@@ -318,12 +333,14 @@ export async function fetchLeaderboard(): Promise<{
 					issue_number: item.number,
 					type: isPR ? 'PR' : 'Issue',
 					isAI,
-					isSpecial
+					specialTag,
+					specialPoints
 				});
 			}
 		}
 	}
 
+	/*
 	const externalPromises = Array.from(userMap.keys()).map((username) =>
 		fetchExternalBestPR(username, repoList, headers)
 	);
@@ -339,6 +356,7 @@ export async function fetchLeaderboard(): Promise<{
 			stats.acceptedCount++;
 		}
 	}
+	*/
 
 	const results = Array.from(userMap.values());
 	results.sort((a, b) => b.score - a.score || a.username.localeCompare(b.username));

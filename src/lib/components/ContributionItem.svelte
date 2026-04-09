@@ -25,16 +25,16 @@
 		</button>
 		
 		<div class="flex items-center gap-2">
-			{#if entry.isSpecial}
+			{#if entry.specialTag}
 				<span class="jetbrains-mono rounded-lg {TAG_COLORS.SPECIAL} px-2.5 py-1 text-[9px] font-black sm:text-[10px] uppercase tracking-tighter shadow-sm">
-					SPECIAL
+					{entry.specialTag}
 				</span>
 			{/if}
-			{#if entry.isExternal}
+			<!-- {#if entry.isExternal}
 				<span class="jetbrains-mono rounded-lg {TAG_COLORS.EXTERNAL} px-2.5 py-1 text-[9px] font-black sm:text-[10px] uppercase tracking-tighter shadow-sm">
 					EXT {#if entry.repoStars}★{entry.repoStars}{/if}
 				</span>
-			{/if}
+			{/if} -->
 			{#if entry.isAI}
 				<span class="jetbrains-mono rounded-lg {TAG_COLORS.AI} px-2.5 py-1 text-[9px] font-black sm:text-[10px] uppercase tracking-tighter shadow-sm animate-pulse">
 					AI GEN

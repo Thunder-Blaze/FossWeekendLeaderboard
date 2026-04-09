@@ -48,7 +48,7 @@
 					...user,
 					contributions: aiContributions,
 					score: aiContributions.reduce(
-						(sum: number, c: ContributionEntry) => sum + (c.isAI ? c.points : 0),
+						(sum: number, c: ContributionEntry) => sum + (c.isAI ? (c.points + (c.specialPoints || 0)) : 0),
 						0
 					)
 				};
@@ -108,7 +108,7 @@
 				>
 					<path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
 				</svg>
-				<span class="jetbrains-mono text-xs font-black tracking-widest uppercase">Leaderboard v26.4</span>
+				<span class="jetbrains-mono text-xs font-black tracking-widest uppercase">Leaderboard v2026</span>
 			</div>
 			
 			<h1
