@@ -9,7 +9,7 @@
 	href={entry.url}
 	target="_blank"
 	rel="noopener noreferrer"
-	class="group relative flex flex-col rounded-3xl bg-surface-container-high p-6 text-on-surface transition-all duration-300 hover:bg-surface-variant hover:scale-[1.02] active:scale-[0.98] border border-outline-variant/30"
+	class="group relative flex flex-col rounded-3xl bg-surface-container p-6 text-on-surface transition-all duration-300 hover:bg-surface-variant hover:scale-[1.02] active:scale-[0.98] border border-outline-variant/30"
 >
 	<div class="mb-4 flex w-full flex-wrap items-center justify-between gap-3">
 		<button

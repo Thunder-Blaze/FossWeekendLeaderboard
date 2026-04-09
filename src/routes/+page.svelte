@@ -35,6 +35,9 @@
 		goto(`?refresh=${Date.now()}`, { invalidateAll: true });
 	}
 
+	let isLoading = $derived(!!$navigating);
+
+
 	let leaderboard = $derived(data.leaderboard || []);
 
 	let filteredLeaderboard = $derived(
@@ -173,15 +176,25 @@
 				{/if}
 			</div>
 		{:else}
-			{#if $navigating}
+			{#if isLoading}
 				<div
-					class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-full bg-primary-container px-6 py-3 text-on-primary-container shadow-[0_12px_40px_rgba(0,0,0,0.4)] ring-1 ring-primary/20 backdrop-blur-2xl"
+					class="fixed inset-x-0 top-0 z-[100] h-1.5 bg-primary/20"
 					transition:fade
 				>
-					<div class="h-5 w-5 animate-[spin_1.5s_linear_infinite]">
-						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-on-primary-container"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+					<div class="h-full bg-primary animate-[loading_2s_infinite_linear] shadow-[0_0_15px_rgba(var(--color-primary),0.5)]"></div>
+				</div>
+
+				<div
+					class="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-full bg-primary px-8 py-4 text-on-primary shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-4 ring-white/10 backdrop-blur-3xl animate-bounce"
+					transition:fade
+				>
+					<div class="h-6 w-6 animate-[spin_1s_linear_infinite]">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
 					</div>
-					<span class="jetbrains-mono text-[10px] font-black tracking-[0.2em] uppercase">Syncing Origin</span>
+					<div class="flex flex-col">
+						<span class="jetbrains-mono text-[11px] font-black tracking-[0.3em] uppercase">Origin Synchronization</span>
+						<span class="text-[9px] font-medium opacity-70 uppercase tracking-widest">Processing GraphQL Nodes...</span>
+					</div>
 				</div>
 			{/if}
 
