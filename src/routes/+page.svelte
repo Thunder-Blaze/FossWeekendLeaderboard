@@ -141,7 +141,7 @@
 			<div
 				class="flex flex-col items-center justify-center rounded-[2.5rem] border border-outline-variant bg-surface-container p-12 shadow-xl sm:p-20"
 			>
-				{#if navigating}
+				{#if isLoading}
 					<div class="mb-10 relative">
 						<div class="h-24 w-24 animate-[spin_3s_linear_infinite] rounded-full border-[8px] border-primary/20 border-t-primary shadow-lg"></div>
 						<div class="absolute inset-0 flex items-center justify-center">
