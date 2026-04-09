@@ -273,7 +273,7 @@
 					rel="noopener noreferrer"
 					class="font-black text-primary transition-all hover:text-tertiary hover:underline underline-offset-8"
 				>
-					FOSS Weekend Community
+					FOSS Weekend
 				</a>
 			</p>
 		</footer>
