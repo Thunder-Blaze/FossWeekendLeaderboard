@@ -9,18 +9,17 @@
 	import { flip } from 'svelte/animate';
 	import { fade } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
-	import { spring } from 'svelte/motion';
-	import { navigating } from '$app/stores';
+	import { Spring } from 'svelte/motion';
+	import { navigating } from '$app/state';
 
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 
 	let { data } = $props<{ data: PageData }>();
 	let searchTerm = $state('');
 	let expandedUsername = $state<string | null>(null);
 	let showOnlyAI = $state(false);
 
-	let buttonScale = spring(1, {
+	let buttonScale = new Spring(1, {
 		stiffness: 0.2,
 		damping: 0.4
 	});
@@ -35,7 +34,7 @@
 		goto(`?refresh=${Date.now()}`, { invalidateAll: true });
 	}
 
-	let isLoading = $derived(!!$navigating);
+	let isLoading = $derived(!!navigating?.type);
 
 
 	let leaderboard = $derived(data.leaderboard || []);
@@ -142,7 +141,7 @@
 			<div
 				class="flex flex-col items-center justify-center rounded-[2.5rem] border border-outline-variant bg-surface-container p-12 shadow-xl sm:p-20"
 			>
-				{#if $navigating}
+				{#if navigating}
 					<div class="mb-10 relative">
 						<div class="h-24 w-24 animate-[spin_3s_linear_infinite] rounded-full border-[8px] border-primary/20 border-t-primary shadow-lg"></div>
 						<div class="absolute inset-0 flex items-center justify-center">
@@ -225,7 +224,7 @@
 
 				<button
 					onclick={handleFilterClick}
-					style="transform: scale({$buttonScale})"
+					style="transform: scale({buttonScale.current})"
 					class="flex items-center justify-center gap-3 rounded-[2rem] px-8 py-5 font-black tracking-tight transition-all duration-300 active:scale-95 {showOnlyAI
 						? 'bg-primary text-on-primary shadow-lg shadow-primary/20'
 						: 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant hover:text-on-surface'}"
