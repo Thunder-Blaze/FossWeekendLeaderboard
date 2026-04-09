@@ -6,9 +6,11 @@ import { CACHE_DURATION_SECONDS } from '$lib/constants';
 let cachedData: any = null;
 let lastFetchTime = 0;
 
-export const load: PageServerLoad = async ({ setHeaders }) => {
+export const load: PageServerLoad = async ({ setHeaders, url }) => {
 	const now = Date.now();
-	if (!cachedData || now - lastFetchTime > CACHE_DURATION_SECONDS * 1000 || cachedData.error) {
+	const forceRefresh = url.searchParams.has('refresh');
+
+	if (forceRefresh || !cachedData || now - lastFetchTime > CACHE_DURATION_SECONDS * 1000 || cachedData.error) {
 		cachedData = await fetchLeaderboard();
 		lastFetchTime = now;
 	}
@@ -20,6 +22,7 @@ export const load: PageServerLoad = async ({ setHeaders }) => {
 
 	return {
 		leaderboard: cachedData.leaderboard,
+		stats: cachedData.stats,
 		error: cachedData.error
 	};
 };

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { LeaderboardEntry } from '$lib/server/github';
 	import { slide } from 'svelte/transition';
+	import { cubicOut } from 'svelte/easing';
 	import ContributionItem from './ContributionItem.svelte';
 
 	let { user, rank, isExpanded, onToggle } = $props<{
@@ -14,31 +15,21 @@
 	let isRank2 = $derived(rank === 2);
 	let isRank3 = $derived(rank === 3);
 
-	let borderStyle = $derived(
-		isRank1
-			? 'border border-accent/30'
-			: isRank2
-				? 'border border-accent/20'
-				: isRank3
-					? 'border border-accent/10'
-					: 'border border-white/5'
-	);
-
-	let cardClass = $derived(
+	let surfaceClass = $derived(
 		isExpanded
-			? 'bg-bg-container hover:bg-bg-container shadow-2xl scale-[1.01]'
-			: 'bg-bg-alt hover:bg-bg-alt-hover'
+			? 'bg-surface-container-high shadow-xl ring-2 ring-primary/20'
+			: 'bg-surface-container hover:bg-surface-container-high hover:scale-[1.01]'
 	);
 </script>
 
 <div
-	class="mb-4 overflow-hidden rounded-[2rem] transition-all duration-300 {cardClass} {borderStyle} text-white"
+	class="mb-4 overflow-hidden rounded-[2.5rem] transition-all duration-500 {surfaceClass} text-on-surface"
 >
 	<button
-		class="flex w-full cursor-pointer items-center justify-between rounded-[2rem] bg-bg-container p-7 px-6 text-left focus:outline-none sm:px-8"
+		class="flex w-full cursor-pointer items-center justify-between p-6 px-7 text-left focus:outline-none sm:px-10 sm:py-8"
 		onclick={onToggle}
 	>
-		<div class="flex w-3/4 items-center gap-4 sm:gap-6">
+		<div class="flex w-3/4 items-center gap-5 sm:gap-8">
 			<a
 				href="https://github.com/{user.username}"
 				target="_blank"
@@ -47,13 +38,13 @@
 				onclick={(e) => e.stopPropagation()}
 			>
 				<div
-					class="relative h-10 w-10 overflow-hidden rounded-full border-2 border-accent/20 transition-transform duration-300 hover:scale-110 sm:h-14 sm:w-14"
+					class="relative h-14 w-14 overflow-hidden rounded-2xl border-2 border-primary/10 transition-all duration-300 hover:scale-110 hover:rounded-xl sm:h-20 sm:w-20"
 				>
 					{#if user.avatarUrl}
 						<img src={user.avatarUrl} alt={user.username} class="h-full w-full object-cover" />
 					{:else}
 						<div
-							class="flex h-full w-full items-center justify-center bg-accent text-xl font-bold text-black sm:text-2xl"
+							class="flex h-full w-full items-center justify-center bg-secondary-container text-2xl font-black text-on-secondary-container sm:text-3xl"
 						>
 							{user.username.substring(0, 2).toUpperCase()}
 						</div>
@@ -61,45 +52,56 @@
 				</div>
 			</a>
 			<div class="overflow-hidden">
-				<h3 class="rubik truncate text-lg font-bold tracking-tight sm:text-2xl">{user.username}</h3>
-				<p class="jetbrains-mono mt-0.5 text-xs font-bold text-accent-80 sm:text-sm">
-					{user.score} points
-				</p>
+				<h3 class="rubik truncate text-xl font-black tracking-tight text-on-surface sm:text-3xl">
+					{user.username}
+				</h3>
+				<div class="mt-1 flex items-center gap-2">
+					<span class="jetbrains-mono rounded-lg bg-primary/10 px-2 py-0.5 text-[10px] font-black tracking-wider text-primary uppercase sm:text-xs">
+						{user.score} PTS
+					</span>
+					{#if isRank1}
+						<span class="rounded-lg bg-tertiary-container px-2 py-0.5 text-[10px] font-bold text-on-tertiary-container sm:text-xs">
+							WEEKEND CHAMPION
+						</span>
+					{/if}
+				</div>
 			</div>
 		</div>
 
 		<div
-			class="jetbrains-mono flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-base font-black shadow-inner transition-transform duration-300 sm:h-14 sm:w-14 sm:text-xl
+			class="jetbrains-mono flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-xl font-black shadow-inner transition-all duration-300 sm:h-16 sm:w-16 sm:text-3xl
 			{isRank1
-				? 'scale-110 bg-accent text-black shadow-[0_0_20px_rgba(77,238,234,0.5)]'
+				? 'bg-primary text-on-primary rotate-6 scale-110'
 				: isRank2
-					? 'bg-accent-80 text-black shadow-[0_0_15px_rgba(77,238,234,0.3)]'
+					? 'bg-secondary text-on-secondary rotate-3'
 					: isRank3
-						? 'bg-accent-60 text-black/80'
-						: 'bg-white/5 text-gray-400'}"
+						? 'bg-tertiary text-on-tertiary -rotate-3'
+						: 'bg-surface-variant text-on-surface-variant opacity-60'}"
 		>
 			{rank}
 		</div>
 	</button>
 
 	{#if isExpanded}
-		<div transition:slide={{ duration: 300 }} class="bg-bg-container/50 px-4 pb-6 sm:px-8">
-			<div class="mb-4 flex items-center gap-3">
-				<div class="h-px flex-1 bg-white/5"></div>
-				<span class="text-[10px] font-black tracking-[0.2em] text-white/20 uppercase">
-					Contributions
+		<div transition:slide={{ duration: 400, easing: cubicOut }} class="px-7 pb-8 sm:px-10">
+			<div class="mb-6 flex items-center gap-4">
+				<div class="h-0.5 flex-1 bg-outline-variant/30"></div>
+				<span class="jetbrains-mono text-[10px] font-black tracking-[0.3em] text-on-surface-variant/40 uppercase">
+					Activity Log
 				</span>
-				<div class="h-px flex-1 bg-white/5"></div>
+				<div class="h-0.5 flex-1 bg-outline-variant/30"></div>
 			</div>
 
 			{#if user.contributions.length > 0}
-				<div class="grid gap-3 sm:gap-4">
+				<div class="grid gap-4">
 					{#each user.contributions as entry (entry.url)}
 						<ContributionItem {entry} />
 					{/each}
 				</div>
 			{:else}
-				<p class="py-2 text-center text-xs text-white/20 italic">No points recorded.</p>
+				<div class="rounded-3xl bg-surface-variant/20 py-8 text-center text-sm font-medium text-on-surface-variant/50 italic">
+					No recent activity recorded
+				</div>
 			{/if}
 		</div>
 	{/if}

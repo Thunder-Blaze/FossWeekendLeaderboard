@@ -14,14 +14,14 @@ export const EXTERNAL_CACHE_DURATION_SECONDS = 3600; // 1 hour
 
 // Event time range in IST (UTC+5:30)
 // Example: '2025-01-24T18:00:00+05:30'
-export const START_TIME_IST = '2025-04-10T00:00:00+05:30';
-export const END_TIME_IST = '2025-04-13T00:00:00+05:30';
+export const START_TIME_IST = '2026-04-10T00:00:00+05:30';
+export const END_TIME_IST = '2026-04-13T00:00:00+05:30';
 
 export const TAG_COLORS = {
-	SPECIAL: 'bg-amber-200',
-	EXTERNAL: 'bg-sky-200',
-	AI: 'bg-fuchsia-200',
-	PR: 'bg-violet-200',
-	ISSUE: 'bg-cyan-200',
-	PTS: 'bg-accent'
+	SPECIAL: 'bg-tertiary-container text-on-tertiary-container',
+	EXTERNAL: 'bg-secondary-container text-on-secondary-container',
+	AI: 'bg-primary-container text-on-primary-container',
+	PR: 'bg-surface-variant text-on-surface-variant',
+	ISSUE: 'bg-surface-variant text-on-surface-variant',
+	PTS: 'bg-primary text-on-primary'
 } as const;

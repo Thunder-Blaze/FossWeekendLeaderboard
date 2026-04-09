@@ -172,11 +172,27 @@ async function fetchExternalBestPR(
 
 export async function fetchLeaderboard(): Promise<{
 	leaderboard: LeaderboardEntry[];
+	stats: {
+		reposCount: number;
+		itemsScanned: number;
+		acceptedCount: number;
+		timestamp: number;
+	};
 	error?: string;
 }> {
 	const repoConfigs = REPOS;
 	const repoList = repoConfigs.map(parseRepoString);
-	if (repoList.length === 0) return { leaderboard: [], error: 'No repositories found' };
+	
+	const stats = {
+		reposCount: repoList.length,
+		itemsScanned: 0,
+		acceptedCount: 0,
+		timestamp: Date.now()
+	};
+
+	if (repoList.length === 0) {
+		return { leaderboard: [], stats, error: 'No repositories found' };
+	}
 
 	const headers: Record<string, string> = {
 		Accept: 'application/vnd.github.v3+json',
@@ -225,7 +241,10 @@ export async function fetchLeaderboard(): Promise<{
 
 	let allItems: any[] = [];
 	for (const batch of allRepoData) {
-		if (Array.isArray(batch)) allItems = allItems.concat(batch);
+		if (Array.isArray(batch)) {
+			allItems = allItems.concat(batch);
+			stats.itemsScanned += batch.length;
+		}
 	}
 
 	const processedUrls = new Set<string>();
@@ -252,6 +271,7 @@ export async function fetchLeaderboard(): Promise<{
 				item.author_association && IGNORED_AUTHOR_ASSOCIATIONS.includes(item.author_association);
 			if (!isPR && isIgnoredAuthor) continue;
 
+			stats.acceptedCount++;
 			const pointsMatch = acceptedLabel.name.toLowerCase().match(/\d+/);
 			if (pointsMatch) {
 				const points = parseInt(pointsMatch[0], 10);
@@ -282,7 +302,6 @@ export async function fetchLeaderboard(): Promise<{
 					(r) => parseRepoString(r).toLowerCase() === repoName.toLowerCase()
 				);
 				
-				// Use the name from config to preserve casing if available
 				const finalRepoName = repoConfig ? repoConfig.name : repoName;
 				const isSpecial = repoConfig?.special || false;
 
@@ -305,7 +324,6 @@ export async function fetchLeaderboard(): Promise<{
 		}
 	}
 
-	// Fetch external contributions for all users found
 	const externalPromises = Array.from(userMap.keys()).map((username) =>
 		fetchExternalBestPR(username, repoList, headers)
 	);
@@ -318,6 +336,7 @@ export async function fetchLeaderboard(): Promise<{
 		if (externalPR) {
 			userEntry.score += externalPR.points;
 			userEntry.contributions.push(externalPR);
+			stats.acceptedCount++;
 		}
 	}
 
@@ -326,6 +345,7 @@ export async function fetchLeaderboard(): Promise<{
 
 	return {
 		leaderboard: results,
+		stats,
 		error: errorOccurred
 	};
 }

@@ -9,17 +9,38 @@
 	--font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
 		'Liberation Mono', 'Courier New', monospace;
 
-	--color-accent: #4deeea;
-	--color-accent-60: rgba(77, 238, 234, 0.6);
-	--color-accent-80: rgba(77, 238, 234, 0.8);
-	--color-bg-base: #0b0f10;
-	--color-bg-card: #0a0e10ff;
-	--color-bg-card-hover: #0a2d3bff;
-	--color-bg-container: #0c1b20ff;
-	--color-bg-alt: #1a272b;
-	--color-bg-alt-hover: #1e2e33;
-	--color-gradient-from: #4deeea;
-	--color-gradient-to: #74ebd5;
+	/* Material 3 Expressive (Dark Mode) */
+	--color-primary: oklch(0.8 0.12 280); /* Vibrant Indigo */
+	--color-on-primary: oklch(0.2 0.05 280);
+	--color-primary-container: oklch(0.35 0.08 280);
+	--color-on-primary-container: oklch(0.9 0.05 280);
+
+	--color-secondary: oklch(0.8 0.05 280); /* Muted Indigo/Grey */
+	--color-on-secondary: oklch(0.2 0.02 280);
+	--color-secondary-container: oklch(0.3 0.03 280);
+	--color-on-secondary-container: oklch(0.85 0.03 280);
+
+	--color-tertiary: oklch(0.8 0.15 320); /* Pop of Pink/Magenta */
+	--color-on-tertiary: oklch(0.2 0.05 320);
+	--color-tertiary-container: oklch(0.35 0.1 320);
+	--color-on-tertiary-container: oklch(0.9 0.05 320);
+
+	--color-surface: oklch(0.14 0.01 280); /* Deep dark background */
+	--color-on-surface: oklch(0.9 0.02 280);
+	--color-surface-container: oklch(0.18 0.01 280);
+	--color-surface-container-high: oklch(0.22 0.01 280);
+	--color-surface-variant: oklch(0.28 0.02 280);
+	--color-on-surface-variant: oklch(0.8 0.02 280);
+
+	--color-outline: oklch(0.4 0.02 280);
+	--color-outline-variant: oklch(0.25 0.02 280);
+
+	/* Compatibility aliases */
+	--color-accent: var(--color-primary);
+	--color-bg-base: var(--color-surface);
+	--color-bg-container: var(--color-surface-container);
+	--color-bg-card: var(--color-surface-container-high);
+	--color-bg-alt: var(--color-surface-variant);
 }
 
 html,
@@ -27,6 +48,17 @@ body {
 	background: var(--color-bg-base);
 	font-family: 'Rubik', sans-serif;
 	font-optical-sizing: auto;
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .mono-tag {
