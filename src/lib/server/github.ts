@@ -372,17 +372,24 @@ export async function fetchLeaderboard(): Promise<{
             if (!node || !node.author || !node.repository) continue;
 
             const repoNameWithOwner = node.repository.nameWithOwner.toLowerCase();
+            const labels = node.labels?.nodes || [];
             
-            // Skip it if it's not in our explicit target list
-            if (!repoSet.has(repoNameWithOwner)) {
-                // Uncomment the line below if you want to see exactly which repos are being ignored
-                // console.log(`[DEBUG] Ignored ${repoNameWithOwner}: Not in REPOS set.`);
+            // --- 1. AI Detection ---
+            const aiLabelNode = labels.find((l) => {
+                const name = (l.name || '').toLowerCase();
+                const parts = name.split(/[-_ ]/);
+                return parts.includes('ai');
+            });
+            const isAI = !!aiLabelNode;
+
+            const isWhitelisted = repoSet.has(repoNameWithOwner);
+
+            // Filter: Include if whitelisted OR if it's an AI contribution
+            if (!isWhitelisted && !isAI) {
                 continue;
             }
 
-            const labels = node.labels?.nodes || [];
-            
-            // Safely check prefixes
+            // --- 2. Acceptance & Point Logic ---
             const validPrefixes = ACCEPTED_LABEL_PREFIXES || [];
             const acceptedLabel = labels.find((l) =>
                 l.name &&
@@ -391,15 +398,15 @@ export async function fetchLeaderboard(): Promise<{
                 )
             );
 
-            if (!acceptedLabel) {
-                console.log(`[DEBUG] Rejected PR #${node.number} in ${repoNameWithOwner}: No accepted label found.`);
+            // If not AI, it MUST have an accepted label
+            if (!isAI && !acceptedLabel) {
+                console.log(`[DEBUG] Rejected PR #${node.number} in ${repoNameWithOwner}: No accepted label found and not AI.`);
                 continue;
             }
 
+            // --- 3. Ignore Maintainer Issues ---
             const isPR = node.url.includes('/pull/');
             const authorRole = node.authorAssociation;
-            
-            // Safely check ignored associations
             const ignoreList = IGNORED_AUTHOR_ASSOCIATIONS || [];
             const isIgnoredAuthor = authorRole && ignoreList.includes(authorRole);
             
@@ -409,74 +416,69 @@ export async function fetchLeaderboard(): Promise<{
             }
 
             stats.acceptedCount++;
-            const pointsMatch = acceptedLabel.name.toLowerCase().match(/\d+/);
             
-            if (pointsMatch) {
-                const points = parseInt(pointsMatch[0], 10);
-                const login = node.author.login;
+            const ptsLabel = acceptedLabel || aiLabelNode;
+            const pointsMatch = ptsLabel?.name?.toLowerCase().match(/\d+/);
+            const points = pointsMatch ? parseInt(pointsMatch[0], 10) : 0;
+            
+            const login = node.author.login;
+            if (!userMap.has(login)) {
+                userMap.set(login, {
+                    username: login,
+                    avatarUrl: node.author.avatarUrl,
+                    score: 0,
+                    lastContributionTime: 0,
+                    contributions: []
+                });
+            }
 
-                if (!userMap.has(login)) {
-                    userMap.set(login, {
-                        username: login,
-                        avatarUrl: node.author.avatarUrl,
-                        score: 0,
-                        lastContributionTime: 0,
-                        contributions: []
-                    });
-                }
+            const userEntry = userMap.get(login)!;
+            const submissionTime = new Date(node.createdAt).getTime();
+            if (submissionTime > userEntry.lastContributionTime) {
+                userEntry.lastContributionTime = submissionTime;
+            }
+            
+            const repoConfig = repoConfigs.find(
+                (r) => parseRepoString(r).toLowerCase() === repoNameWithOwner
+            );
+            
+            const finalRepoName = repoConfig ? (typeof repoConfig === 'string' ? repoConfig : repoConfig.name) : node.repository.nameWithOwner;
+            const isSpecialRepo = typeof repoConfig !== 'string' && repoConfig?.special ? true : false;
+            
+            let specialPoints = 0;
+            let specialTag = undefined;
 
-                const userEntry = userMap.get(login)!;
-                const submissionTime = new Date(node.createdAt).getTime();
-                if (submissionTime > userEntry.lastContributionTime) {
-                    userEntry.lastContributionTime = submissionTime;
-                }
-                
-                const repoConfig = repoConfigs.find(
-                    (r) => parseRepoString(r).toLowerCase() === repoNameWithOwner
+            if (isSpecialRepo) {
+                const safeSpecialPrefix = (SPECIAL_LABEL_PREFIX || '').toLowerCase();
+                const specialLabel = labels.find((l) =>
+                    l.name && safeSpecialPrefix && l.name.toLowerCase().startsWith(safeSpecialPrefix)
                 );
-                
-                const finalRepoName = repoConfig ? (typeof repoConfig === 'string' ? repoConfig : repoConfig.name) : node.repository.nameWithOwner;
-                const isSpecialRepo = typeof repoConfig !== 'string' && repoConfig?.special ? true : false;
-                
-                let specialPoints = 0;
-                let specialTag = undefined;
-
-                if (isSpecialRepo) {
-                    const safeSpecialPrefix = (SPECIAL_LABEL_PREFIX || '').toLowerCase();
-                    const specialLabel = labels.find((l) =>
-                        l.name && safeSpecialPrefix && l.name.toLowerCase().startsWith(safeSpecialPrefix)
-                    );
-                    if (specialLabel) {
-                        specialTag = specialLabel.name;
-                        const match = specialTag.match(new RegExp(`${safeSpecialPrefix}(\\d+)`, 'i'));
-                        if (match) {
-                            specialPoints = parseInt(match[1], 10);
-                        }
+                if (specialLabel) {
+                    specialTag = specialLabel.name;
+                    const match = specialTag.match(new RegExp(`${safeSpecialPrefix}(\\d+)`, 'i'));
+                    if (match) {
+                        specialPoints = parseInt(match[1], 10);
                     }
                 }
-
-                userEntry.score += (points + specialPoints);
-
-                const aiLabelNode = labels.find((l) => l.name && l.name.toLowerCase().includes('ai'));
-                
-                userEntry.contributions.push({
-                    title: node.title,
-                    url: node.url,
-                    points: points,
-                    repo_name: finalRepoName,
-                    issue_number: node.number,
-                    type: isPR ? 'PR' : 'Issue',
-                    isAI: !!aiLabelNode,
-                    aiLabel: aiLabelNode?.name,
-                    createdAt: node.createdAt,
-                    specialTag,
-                    specialPoints
-                });
-                
-                console.log(`[DEBUG] Successfully assigned ${points} pts to ${login} for PR/Issue #${node.number}`);
-            } else {
-                console.log(`[DEBUG] Warning: Found accepted label '${acceptedLabel.name}' but could not extract a number from it.`);
             }
+
+            userEntry.score += (points + specialPoints);
+
+            userEntry.contributions.push({
+                title: node.title,
+                url: node.url,
+                points: points,
+                repo_name: finalRepoName,
+                issue_number: node.number,
+                type: isPR ? 'PR' : 'Issue',
+                isAI: isAI,
+                aiLabel: aiLabelNode?.name,
+                createdAt: node.createdAt,
+                specialTag,
+                specialPoints
+            });
+            
+            console.log(`[DEBUG] Successfully assigned ${points} pts to ${login} for PR/Issue #${node.number}`);
         }
         
         console.log(`[GITHUB] Processing completed successfully. Total accepted items: ${stats.acceptedCount}`);
