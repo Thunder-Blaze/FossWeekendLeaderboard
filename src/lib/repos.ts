@@ -50,5 +50,6 @@ export const REPOS: RepoConfig[] = [
 	{ name: 'iiitl/Zonic' },
 	{ name: 'iiitl/mintlify-docs' },
 	{ name: 'iiitl/Private' },
-	{ name: 'iiitl/MessEase', special: true }
+	{ name: 'iiitl/MessEase', special: true },
+	{ name: 'iiitl/alumni', special: true }
 ];
