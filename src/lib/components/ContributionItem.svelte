@@ -37,7 +37,7 @@
 			{/if} -->
 			{#if entry.isAI}
 				<span class="jetbrains-mono rounded-lg {TAG_COLORS.AI} px-2.5 py-1 text-[9px] font-black sm:text-[10px] uppercase tracking-tighter shadow-sm animate-pulse">
-					AI GEN
+					{entry.aiLabel || 'AI GEN'}
 				</span>
 			{/if}
 			<span class="jetbrains-mono rounded-lg {TAG_COLORS.PTS} px-2.5 py-1 text-[9px] font-black sm:text-[10px] shadow-md">

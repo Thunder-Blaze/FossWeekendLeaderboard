@@ -19,6 +19,7 @@ export interface ContributionEntry {
     issue_number: number;
     type: 'PR' | 'Issue';
     isAI: boolean;
+    aiLabel?: string;
     createdAt: string;
     specialTag?: string;
     specialPoints?: number;
@@ -456,6 +457,8 @@ export async function fetchLeaderboard(): Promise<{
 
                 userEntry.score += (points + specialPoints);
 
+                const aiLabelNode = labels.find((l) => l.name && l.name.toLowerCase().includes('ai'));
+                
                 userEntry.contributions.push({
                     title: node.title,
                     url: node.url,
@@ -463,7 +466,8 @@ export async function fetchLeaderboard(): Promise<{
                     repo_name: finalRepoName,
                     issue_number: node.number,
                     type: isPR ? 'PR' : 'Issue',
-                    isAI: labels.some((l) => l.name && l.name.toLowerCase().includes('ai')),
+                    isAI: !!aiLabelNode,
+                    aiLabel: aiLabelNode?.name,
                     createdAt: node.createdAt,
                     specialTag,
                     specialPoints

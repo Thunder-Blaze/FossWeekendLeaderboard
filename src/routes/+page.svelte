@@ -225,9 +225,10 @@
 				<button
 					onclick={handleFilterClick}
 					style="transform: scale({buttonScale.current})"
-					class="flex items-center justify-center gap-3 rounded-[2rem] px-8 py-5 font-black tracking-tight transition-all duration-300 active:scale-95 {showOnlyAI
+					class="group flex items-center justify-center gap-3 rounded-[2rem] px-8 py-5 font-black tracking-tight transition-all duration-300 active:scale-95 {showOnlyAI
 						? 'bg-primary text-on-primary shadow-lg shadow-primary/20'
 						: 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant hover:text-on-surface'}"
+					title="Filters contributions tagged with AI-related labels (e.g. ai-generated)"
 				>
 					<span class="jetbrains-mono text-sm uppercase">AI Filter</span>
 					{#if showOnlyAI}
