@@ -3,7 +3,7 @@ export const SPECIAL_LABEL_PREFIX = 'special-';
 export const CACHE_DURATION_SECONDS = 900; // 15 minutes
 export const GITHUB_API_URL = 'https://api.github.com/repos';
 export const ISSUES_PER_PAGE = 100;
-export const MAX_PAGES_TO_FETCH = 3;
+export const MAX_PAGES_TO_FETCH = 10;
 
 // Author associations to exclude from the leaderboard scoring
 export const IGNORED_AUTHOR_ASSOCIATIONS = ['OWNER', 'COLLABORATOR'];
