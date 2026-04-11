@@ -1,0 +1,78 @@
+[SPECIAL]
+repos = [
+    "student-hub",
+    "MessEase",
+    "alumni"
+]
+
+[WEB]
+repos = [
+    "PlanWise",
+    "mintlify-docs",
+    "Zonic",
+    "insane-vitepress",
+    "Opensource_Compass",
+    "rjagro",
+    "CargoCut",
+    "StonkSchool",
+    "anilist_moe",
+    "AlgoJudge",
+    "ChatterBox",
+    "NewTab-Overdrive",
+    "Cp_Discord_Bot",
+    "yt-music-tauri",
+    "Chat-app",
+    "Crate",
+    "MissionSakhi"
+]
+
+[FOSS]
+repos = [
+    "OxiDock",
+    "PerOXO",
+    "Shadowlock",
+    "ScreenExtractor",
+    "warp",
+    "chuck",
+    "cp-rs",
+    "pygame-arcade",
+    "smartdoc-workshop",
+    "Private"
+]
+
+[APP]
+repos = [
+    "CodeForces",
+    "Wanderlens",
+    "StocksApp",
+    "Student-Hub-App",
+    "Tap2Eat",
+    "CForge"
+]
+
+[ML]
+repos = [
+    "ML-Arena",
+    "Linear-Regression",
+    "K-Means-Clustering",
+    "Logistic-Regression",
+    "Neural-Networks",
+    "Decision-Tree",
+    "EDA-IPL"
+]
+
+[WEB3]
+repos = [
+    "whisper",
+    "decentralized-uptime-monitoring",
+    "Victory-Verse",
+    "HeartSync",
+    "Drishya",
+    "BountyRaffle"
+]
+
+[GIT-BASH]
+repos = [
+    "git-repo-2026",
+    "Bash-Repo-2026",
+]
