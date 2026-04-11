@@ -1,5 +1,4 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import groupsContent from '$lib/data/groups.toml?raw';
 import { parse } from 'smol-toml';
 import { env } from '$env/dynamic/private';
 import { START_TIME_IST, END_TIME_IST, MAX_PAGES_TO_FETCH } from '$lib/constants';
@@ -20,9 +19,7 @@ let cachedStats: GroupStats[] | null = null;
 let lastFetchTime: number = 0;
 
 export function getGroupsConfig(): GroupsConfig {
-	const filePath = join(process.cwd(), 'src/lib/data/groups.toml');
-	const content = readFileSync(filePath, 'utf-8');
-	return parse(content) as unknown as GroupsConfig;
+	return parse(groupsContent) as unknown as GroupsConfig;
 }
 
 export async function fetchGroupsStats(forceRefresh = false): Promise<{ stats: GroupStats[]; timestamp: number }> {
@@ -75,6 +72,9 @@ export async function fetchGroupsStats(forceRefresh = false): Promise<{ stats: G
 	const statsMap = new Map<string, number>();
 	for (const group of groups) statsMap.set(group, 0);
 
+	let totalScanned = 0;
+	let totalAccepted = 0;
+
 	try {
 		let hasNextPage = true;
 		let cursor: string | null = null;
@@ -107,12 +107,15 @@ export async function fetchGroupsStats(forceRefresh = false): Promise<{ stats: G
 			}
 
 			const nodes = result.data.search.nodes;
+			totalScanned += nodes.length;
+
 			for (const node of nodes) {
 				if (node?.repository?.name) {
 					const repoName = node.repository.name.toLowerCase();
 					const group = repoToGroup.get(repoName);
 					if (group) {
 						statsMap.set(group, (statsMap.get(group) || 0) + 1);
+						totalAccepted++;
 					}
 				}
 			}
@@ -127,6 +130,10 @@ export async function fetchGroupsStats(forceRefresh = false): Promise<{ stats: G
 			repos: config[group].repos
 		}));
 		lastFetchTime = Date.now();
+
+		console.log(
+			`[GROUPS] Processing completed successfully. Total accepted items: ${totalAccepted} out of ${totalScanned} items scanned.`
+		);
 
 		return { stats: cachedStats, timestamp: lastFetchTime };
 	} catch (e) {
