@@ -51,5 +51,8 @@ export const REPOS: RepoConfig[] = [
 	{ name: 'iiitl/mintlify-docs' },
 	{ name: 'iiitl/Private' },
 	{ name: 'iiitl/MessEase', special: true },
-	{ name: 'iiitl/alumni', special: true }
+	{ name: 'iiitl/alumni', special: true },
+	{ name: 'iiitl/MissionSakhi' },
+	{ name: 'iiitl/Crate' },
+	{ name: 'iiitl/Chat-app' },
 ];

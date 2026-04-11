@@ -31,11 +31,11 @@
 
 	function handleRefresh() {
 		buttonScale.set(0.95).then(() => buttonScale.set(1));
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
 		goto(`?refresh=${Date.now()}`, { invalidateAll: true });
 	}
 
 	let isLoading = $derived(!!navigating?.type);
-
 
 	let leaderboard = $derived(data.leaderboard || []);
 
@@ -50,7 +50,8 @@
 					...user,
 					contributions: aiContributions,
 					score: aiContributions.reduce(
-						(sum: number, c: ContributionEntry) => sum + (c.isAI ? (c.points + (c.specialPoints || 0)) : 0),
+						(sum: number, c: ContributionEntry) =>
+							sum + (c.isAI ? c.points + (c.specialPoints || 0) : 0),
 						0
 					)
 				};
@@ -84,18 +85,22 @@
 	<title>FOSS Weekend Leaderboard</title>
 </svelte:head>
 
-<div class="min-h-screen bg-surface font-sans text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<div
+	class="min-h-screen bg-surface font-sans text-on-surface selection:bg-primary-container selection:text-on-primary-container"
+>
 	<!-- Dynamic Material You background shapes -->
 	<div
 		class="pointer-events-none fixed top-[5%] left-[-10%] h-[40vw] w-[40vw] rounded-full bg-primary/10 blur-[120px]"
 	></div>
 	<div
-		class="pointer-events-none fixed bottom-[10%] right-[-5%] h-[30vw] w-[30vw] rounded-full bg-tertiary/10 blur-[100px]"
+		class="pointer-events-none fixed right-[-5%] bottom-[10%] h-[30vw] w-[30vw] rounded-full bg-tertiary/10 blur-[100px]"
 	></div>
 
 	<div class="relative z-10 container mx-auto max-w-[1200px] px-4 py-12 md:px-8 lg:py-20">
-		<header class="mb-12 flex flex-col items-center text-center space-y-4">
-			<div class="inline-flex items-center justify-center rounded-3xl bg-primary-container px-6 py-2 text-on-primary-container shadow-sm mb-4">
+		<header class="mb-12 flex flex-col items-center space-y-4 text-center">
+			<div
+				class="mb-4 inline-flex items-center justify-center rounded-3xl bg-primary-container px-6 py-2 text-on-primary-container shadow-sm"
+			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="20"
@@ -110,16 +115,19 @@
 				>
 					<path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
 				</svg>
-				<span class="jetbrains-mono text-xs font-black tracking-widest uppercase">Leaderboard v2026</span>
+				<span class="jetbrains-mono text-xs font-black tracking-widest uppercase"
+					>Leaderboard v2026</span
+				>
 			</div>
-			
+
 			<h1
 				class="rubik text-5xl font-black tracking-tight text-primary drop-shadow-sm sm:text-7xl lg:text-8xl"
 			>
 				FOSS Weekend
 			</h1>
-			<p class="max-w-xl text-lg font-medium text-on-surface-variant/70 leading-relaxed">
-				Recognizing extraordinary contributions to the open-source ecosystem during the weekend sprint.
+			<p class="max-w-xl text-lg leading-relaxed font-medium text-on-surface-variant/70">
+				Recognizing extraordinary contributions to the open-source ecosystem during the weekend
+				sprint.
 			</p>
 		</header>
 
@@ -127,7 +135,11 @@
 			<div
 				class="flex flex-col items-center justify-center rounded-[2.5rem] border border-outline-variant bg-surface-container p-12 text-center"
 			>
-				<div class="mb-6 rounded-full bg-tertiary-container p-6 text-on-tertiary-container text-4xl">⚠️</div>
+				<div
+					class="mb-6 rounded-full bg-tertiary-container p-6 text-4xl text-on-tertiary-container"
+				>
+					⚠️
+				</div>
 				<h2 class="mb-2 text-2xl font-bold">Connection Terminated</h2>
 				<p class="max-w-md text-on-surface-variant">{data.error}</p>
 				<button
@@ -142,24 +154,57 @@
 				class="flex flex-col items-center justify-center rounded-[2.5rem] border border-outline-variant bg-surface-container p-12 shadow-xl sm:p-20"
 			>
 				{#if isLoading}
-					<div class="mb-10 relative">
-						<div class="h-24 w-24 animate-[spin_3s_linear_infinite] rounded-full border-[8px] border-primary/20 border-t-primary shadow-lg"></div>
+					<div class="relative mb-10">
+						<div
+							class="h-24 w-24 animate-[spin_3s_linear_infinite] rounded-full border-[8px] border-primary/20 border-t-primary shadow-lg"
+						></div>
 						<div class="absolute inset-0 flex items-center justify-center">
-							<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-primary animate-pulse"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="32"
+								height="32"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="3"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								class="animate-pulse text-primary"
+								><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /><path
+									d="M21 3v5h-5"
+								/></svg
+							>
 						</div>
 					</div>
-					
-					<h2 class="mb-4 text-3xl font-black text-primary animate-pulse italic">Synchronizing Origin...</h2>
+
+					<h2 class="mb-4 animate-pulse text-3xl font-black text-primary italic">
+						Synchronizing Origin...
+					</h2>
 				{:else}
 					<div class="mb-8 rounded-full bg-surface-variant/30 p-8">
-						<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-on-surface-variant/30"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="64"
+							height="64"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="text-on-surface-variant/30"
+							><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M12 8v8" /><path
+								d="M8 12h8"
+							/></svg
+						>
 					</div>
 					<h2 class="mb-4 text-3xl font-black text-on-surface">No Contributions Detected</h2>
-					
-					<p class="mb-8 max-w-md text-on-surface-variant/70 text-lg">
-						No contributions matched the accepted criteria in the monitored repositories for this weekend.
+
+					<p class="mb-8 max-w-md text-lg text-on-surface-variant/70">
+						No contributions matched the accepted criteria in the monitored repositories for this
+						weekend.
 					</p>
-					
+
 					<button
 						onclick={handleRefresh}
 						class="rounded-full bg-primary px-10 py-4 font-black text-on-primary shadow-lg transition-all hover:scale-105 active:scale-95"
@@ -168,7 +213,9 @@
 					</button>
 
 					{#if data.stats?.timestamp}
-						<p class="mt-6 jetbrains-mono text-[9px] font-black text-on-surface-variant/30 uppercase tracking-[0.2em]">
+						<p
+							class="jetbrains-mono mt-6 text-[9px] font-black tracking-[0.2em] text-on-surface-variant/30 uppercase"
+						>
 							Snapshot: {new Date(data.stats.timestamp).toLocaleTimeString()}
 						</p>
 					{/if}
@@ -176,23 +223,39 @@
 			</div>
 		{:else}
 			{#if isLoading}
-				<div
-					class="fixed inset-x-0 top-0 z-[100] h-1.5 bg-primary/20"
-					transition:fade
-				>
-					<div class="h-full bg-primary animate-[loading_2s_infinite_linear] shadow-[0_0_15px_rgba(var(--color-primary),0.5)]"></div>
+				<div class="fixed inset-x-0 top-0 z-[100] h-1.5 bg-primary/20" transition:fade>
+					<div
+						class="h-full animate-[loading_2s_infinite_linear] bg-primary shadow-[0_0_15px_rgba(var(--color-primary),0.5)]"
+					></div>
 				</div>
 
 				<div
-					class="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-full bg-primary px-8 py-4 text-on-primary shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-4 ring-white/10 backdrop-blur-3xl animate-bounce"
+					class="fixed bottom-12 left-1/2 z-50 flex -translate-x-1/2 animate-bounce items-center gap-4 rounded-full bg-primary px-8 py-4 text-on-primary shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-4 ring-white/10 backdrop-blur-3xl"
 					transition:fade
 				>
 					<div class="h-6 w-6 animate-[spin_1s_linear_infinite]">
-						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="24"
+							height="24"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="4"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /><path
+								d="M21 3v5h-5"
+							/></svg
+						>
 					</div>
 					<div class="flex flex-col">
-						<span class="jetbrains-mono text-[11px] font-black tracking-[0.3em] uppercase">Origin Synchronization</span>
-						<span class="text-[9px] font-medium opacity-70 uppercase tracking-widest">Processing GraphQL Nodes...</span>
+						<span class="jetbrains-mono text-[11px] font-black tracking-[0.3em] uppercase"
+							>Origin Synchronization</span
+						>
+						<span class="text-[9px] font-medium tracking-widest uppercase opacity-70"
+							>Processing GraphQL Nodes...</span
+						>
 					</div>
 				</div>
 			{/if}
@@ -204,9 +267,13 @@
 
 			<!-- Search Bar & Filters (MD3 Expressive) -->
 			<div class="mb-12 flex w-full flex-col gap-4 sm:flex-row sm:items-stretch">
-				<div class="relative flex-1 group">
+				<div class="group relative flex-1">
 					<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-6">
-						<svg class="h-6 w-6 text-primary/60 transition-colors group-focus-within:text-primary" viewBox="0 0 20 20" fill="currentColor">
+						<svg
+							class="h-6 w-6 text-primary/60 transition-colors group-focus-within:text-primary"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
 							<path
 								fill-rule="evenodd"
 								d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
@@ -218,7 +285,7 @@
 						type="text"
 						bind:value={searchTerm}
 						placeholder="Find a contributor..."
-						class="jetbrains-mono block w-full rounded-[2rem] border-2 border-transparent bg-surface-container-high py-5 pr-6 pl-16 text-lg text-on-surface placeholder-on-surface-variant/50 transition-all duration-300 focus:border-primary focus:bg-surface focus:outline-none focus:shadow-[0_0_0_4px_oklch(var(--color-primary)/0.1)]"
+						class="jetbrains-mono block w-full rounded-[2rem] border-2 border-transparent bg-surface-container-high py-5 pr-6 pl-16 text-lg text-on-surface placeholder-on-surface-variant/50 transition-all duration-300 focus:border-primary focus:bg-surface focus:shadow-[0_0_0_4px_oklch(var(--color-primary)/0.1)] focus:outline-none"
 					/>
 				</div>
 
@@ -232,7 +299,7 @@
 				>
 					<span class="jetbrains-mono text-sm uppercase">AI Filter</span>
 					{#if showOnlyAI}
-						<div class="h-2 w-2 rounded-full bg-on-primary animate-pulse"></div>
+						<div class="h-2 w-2 animate-pulse rounded-full bg-on-primary"></div>
 					{:else}
 						<div class="h-2 w-2 rounded-full bg-outline-variant"></div>
 					{/if}
@@ -245,8 +312,8 @@
 					<!-- Find their absolute rank across the entire leaderboard -->
 					{@const absoluteRank =
 						leaderboard.findIndex((l: LeaderboardEntry) => l.username === entry.username) + 1}
-					<div 
-						animate:flip={{ duration: 600, easing: cubicOut }} 
+					<div
+						animate:flip={{ duration: 600, easing: cubicOut }}
 						transition:fade={{ delay: i * 50, duration: 400 }}
 					>
 						<LeaderboardCard
@@ -263,28 +330,33 @@
 							class="rounded-[2.5rem] bg-surface-container p-12 text-center text-on-surface-variant/50 border-2 border-dashed border-outline-variant/30"
 						>
 							<div class="text-4xl mb-4 opacity-20">🔍</div>
-							No contributors found matching <span class="text-primary font-black">"{searchTerm}"</span>
+							No contributors found matching<span class="text-primary font-black"
+								>"{searchTerm}"</span
+							>
 						</div>
 					{/if}
 				{/each}
 			</div>
 		{/if}
 
-		<footer class="mt-8 pb-12 text-center space-y-6">
+		<footer class="mt-8 space-y-6 pb-12 text-center">
 			<div class="flex flex-col items-center gap-2">
 				<div class="h-1 w-12 rounded-full bg-primary/20"></div>
-				<p class="jetbrains-mono text-[10px] font-black tracking-[0.4em] text-on-surface-variant/40 uppercase">
+				<p
+					class="jetbrains-mono text-[10px] font-black tracking-[0.4em] text-on-surface-variant/40 uppercase"
+				>
 					Automated Synchronized State
 				</p>
 			</div>
-			
+
 			<p class="text-on-surface-variant/60">
-				Build with precision for the 
+				Build with precision for the
 				<a
+					// eslint-disable-next-line svelte/no-navigation-without-resolve
 					href={HOMEPAGE_URL}
 					target="_blank"
 					rel="noopener noreferrer"
-					class="font-black text-primary transition-all hover:text-tertiary hover:underline underline-offset-8"
+					class="font-black text-primary underline-offset-8 transition-all hover:text-tertiary hover:underline"
 				>
 					FOSS Weekend
 				</a>

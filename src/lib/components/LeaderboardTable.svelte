@@ -35,7 +35,7 @@
 					</td>
 				</tr>
 			{:else}
-				{#each filteredData as entry, idx (entry.username)}
+				{#each filteredData as entry (entry.username)}
 					<tr
 						animate:flip={{ duration: 300 }}
 						transition:fade

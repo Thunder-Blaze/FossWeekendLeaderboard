@@ -56,11 +56,15 @@
 					{user.username}
 				</h3>
 				<div class="mt-1 flex items-center gap-2">
-					<span class="jetbrains-mono rounded-lg bg-primary/10 px-2 py-0.5 text-[10px] font-black tracking-wider text-primary uppercase sm:text-xs">
+					<span
+						class="jetbrains-mono rounded-lg bg-primary/10 px-2 py-0.5 text-[10px] font-black tracking-wider text-primary uppercase sm:text-xs"
+					>
 						{user.score} PTS
 					</span>
 					{#if isRank1}
-						<span class="rounded-lg bg-tertiary-container px-2 py-0.5 text-[10px] font-bold text-on-tertiary-container sm:text-xs">
+						<span
+							class="rounded-lg bg-tertiary-container px-2 py-0.5 text-[10px] font-bold text-on-tertiary-container sm:text-xs"
+						>
 							WEEKEND CHAMPION
 						</span>
 					{/if}
@@ -71,11 +75,11 @@
 		<div
 			class="jetbrains-mono flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-xl font-black shadow-inner transition-all duration-300 sm:h-16 sm:w-16 sm:text-3xl
 			{isRank1
-				? 'bg-primary text-on-primary rotate-6 scale-110'
+				? 'scale-110 rotate-6 bg-primary text-on-primary'
 				: isRank2
-					? 'bg-secondary text-on-secondary rotate-3'
+					? 'rotate-3 bg-secondary text-on-secondary'
 					: isRank3
-						? 'bg-tertiary text-on-tertiary -rotate-3'
+						? '-rotate-3 bg-tertiary text-on-tertiary'
 						: 'bg-surface-variant text-on-surface-variant opacity-60'}"
 		>
 			{rank}
@@ -86,7 +90,9 @@
 		<div transition:slide={{ duration: 400, easing: cubicOut }} class="px-7 pb-8 sm:px-10">
 			<div class="mb-6 flex items-center gap-4">
 				<div class="h-0.5 flex-1 bg-outline-variant/30"></div>
-				<span class="jetbrains-mono text-[10px] font-black tracking-[0.3em] text-on-surface-variant/40 uppercase">
+				<span
+					class="jetbrains-mono text-[10px] font-black tracking-[0.3em] text-on-surface-variant/40 uppercase"
+				>
 					Activity Log
 				</span>
 				<div class="h-0.5 flex-1 bg-outline-variant/30"></div>
@@ -99,7 +105,9 @@
 					{/each}
 				</div>
 			{:else}
-				<div class="rounded-3xl bg-surface-variant/20 py-8 text-center text-sm font-medium text-on-surface-variant/50 italic">
+				<div
+					class="rounded-3xl bg-surface-variant/20 py-8 text-center text-sm font-medium text-on-surface-variant/50 italic"
+				>
 					No recent activity recorded
 				</div>
 			{/if}
