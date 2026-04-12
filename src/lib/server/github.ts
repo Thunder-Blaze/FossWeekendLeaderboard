@@ -242,14 +242,9 @@ export async function fetchLeaderboard(): Promise<{
 	let errorOccurred: string | undefined;
 	const allNodes: GQLNode[] = [];
 
-	const toUTC = (ist: string) => new Date(ist).toISOString().split('.')[0] + 'Z';
-	const startUTC = toUTC(START_TIME_IST);
-	const endUTC = toUTC(END_TIME_IST);
-
-	const issueQueryString = `org:iiitl is:issue created:${startUTC}..${endUTC}`;
-	const prQueryString = `org:iiitl is:pr created:${startUTC}..${endUTC}`;
-	console.log(`[GITHUB] Executing simplified Org Query: ${issueQueryString}`);
-	console.log(`[GITHUB] Executing simplified Org Query: ${prQueryString}`);
+	const startDate = new Date(START_TIME_IST);
+	const endDate = new Date(END_TIME_IST);
+	const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 	const gqlQuery = `
         query($queryString: String!, $cursor: String) {
@@ -305,55 +300,65 @@ export async function fetchLeaderboard(): Promise<{
         }
     `;
 
-	try {
-		const fetchQuery = async (queryStr: string) => {
+	const fetchInIntervals = async (baseQuery: string) => {
+		const nodesMap = new Map<string, GQLNode>();
+		let currentStart = startDate.getTime();
+
+		while (currentStart < endDate.getTime()) {
+			const currentEnd = Math.min(currentStart + ONE_DAY_MS, endDate.getTime());
+			const startISO = new Date(currentStart).toISOString().split('.')[0] + 'Z';
+			const endISO = new Date(currentEnd).toISOString().split('.')[0] + 'Z';
+			const queryString = `${baseQuery} created:${startISO}..${endISO}`;
+
+			console.log(`[GITHUB] Fetching interval: ${startISO} to ${endISO}`);
+			
 			let hasNextPage = true;
 			let cursor: string | null = null;
 			let pageCount = 0;
-			const nodes: GQLNode[] = [];
 
-			while (hasNextPage && pageCount < (MAX_PAGES_TO_FETCH || 15)) {
+			while (hasNextPage && pageCount < (MAX_PAGES_TO_FETCH || 20)) {
 				pageCount++;
-				const controller = new AbortController();
-				const timeout = setTimeout(() => controller.abort(), 30000);
-
 				const response = await fetch('https://api.github.com/graphql', {
 					method: 'POST',
 					headers,
-					body: JSON.stringify({ query: gqlQuery, variables: { queryString: queryStr, cursor } }),
-					signal: controller.signal
+					body: JSON.stringify({ query: gqlQuery, variables: { queryString, cursor } })
 				});
-
-				clearTimeout(timeout);
 
 				if (!response.ok) {
 					throw new Error(`GitHub API HTTP error: ${response.status}`);
 				}
 
 				const result = (await response.json()) as GQLSearchResponse;
-
 				if (result.errors) {
 					throw new Error(`GraphQL Error: ${result.errors[0]?.message}`);
 				}
 
 				const searchData = result.data.search;
 				const validNodes = searchData.nodes.filter((node): node is GQLNode => node !== null);
-				nodes.push(...validNodes);
+				
+				for (const node of validNodes) {
+					nodesMap.set(node.url, node);
+				}
 
 				hasNextPage = searchData.pageInfo.hasNextPage;
 				cursor = searchData.pageInfo.endCursor;
 			}
-			return nodes;
-		};
+			
+			console.log(`[GITHUB] Completed interval. Aggregate count: ${nodesMap.size}`);
+			currentStart = currentEnd; 
+		}
+		return Array.from(nodesMap.values());
+	};
 
+	try {
 		// --- 1. DATA FETCHING ---
-		console.log(`[GITHUB] Fetching Issues...`);
-		const issueNodes = await fetchQuery(issueQueryString);
-		console.log(`[GITHUB] Found ${issueNodes.length} issues.`);
+		console.log(`[GITHUB] Fetching Issues in daily intervals...`);
+		const issueNodes = await fetchInIntervals('org:iiitl is:issue');
+		console.log(`[GITHUB] Found ${issueNodes.length} issues across all intervals.`);
 
-		console.log(`[GITHUB] Fetching Pull Requests...`);
-		const prNodes = await fetchQuery(prQueryString);
-		console.log(`[GITHUB] Found ${prNodes.length} pull requests.`);
+		console.log(`[GITHUB] Fetching Pull Requests in daily intervals...`);
+		const prNodes = await fetchInIntervals('org:iiitl is:pr');
+		console.log(`[GITHUB] Found ${prNodes.length} pull requests across all intervals.`);
 
 		allNodes.push(...issueNodes, ...prNodes);
 

@@ -60,6 +60,7 @@ export async function fetchGroupsStats(forceRefresh = false): Promise<{ stats: G
                 }
                 nodes {
                     ... on PullRequest {
+                        url
                         repository {
                             name
                         }
@@ -74,54 +75,73 @@ export async function fetchGroupsStats(forceRefresh = false): Promise<{ stats: G
 
 	let totalScanned = 0;
 	let totalAccepted = 0;
+	const processedUrls = new Set<string>();
 
 	try {
-		let hasNextPage = true;
-		let cursor: string | null = null;
-		let pageCount = 0;
+		const startDate = new Date(START_TIME_IST);
+		const endDate = new Date(END_TIME_IST);
+		const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+		let currentStart = startDate.getTime();
 
-		while (hasNextPage && pageCount < (MAX_PAGES_TO_FETCH || 15)) {
-			pageCount++;
-			const response: Response = await fetch('https://api.github.com/graphql', {
-				method: 'POST',
-				headers,
-				body: JSON.stringify({ query: gqlQuery, variables: { queryString: prQueryString, cursor } })
-			});
+		while (currentStart < endDate.getTime()) {
+			const currentEnd = Math.min(currentStart + ONE_DAY_MS, endDate.getTime());
+			const startISO = new Date(currentStart).toISOString().split('.')[0] + 'Z';
+			const endISO = new Date(currentEnd).toISOString().split('.')[0] + 'Z';
+			const queryString = `org:iiitl is:pr created:${startISO}..${endISO}`;
 
-			if (!response.ok) {
-				throw new Error(`GitHub API HTTP error: ${response.status}`);
-			}
+			console.log(`[GROUPS] Fetching interval: ${startISO} to ${endISO}`);
 
-			const result = (await response.json()) as {
-				data: {
-					search: {
-						pageInfo: { hasNextPage: boolean; endCursor: string | null };
-						nodes: { repository: { name: string } }[];
+			let hasNextPage = true;
+			let cursor: string | null = null;
+			let pageCount = 0;
+
+			while (hasNextPage && pageCount < (MAX_PAGES_TO_FETCH || 15)) {
+				pageCount++;
+				const response: Response = await fetch('https://api.github.com/graphql', {
+					method: 'POST',
+					headers,
+					body: JSON.stringify({ query: gqlQuery, variables: { queryString, cursor } })
+				});
+
+				if (!response.ok) {
+					throw new Error(`GitHub API HTTP error: ${response.status}`);
+				}
+
+				const result = (await response.json()) as {
+					data: {
+						search: {
+							pageInfo: { hasNextPage: boolean; endCursor: string | null };
+							nodes: { url: string; repository: { name: string } }[];
+						};
 					};
+					errors?: { message: string }[];
 				};
-				errors?: { message: string }[];
-			};
 
-			if (result.errors) {
-				throw new Error(`GraphQL Error: ${result.errors[0]?.message}`);
-			}
+				if (result.errors) {
+					throw new Error(`GraphQL Error: ${result.errors[0]?.message}`);
+				}
 
-			const nodes = result.data.search.nodes;
-			totalScanned += nodes.length;
+				const nodes = result.data.search.nodes;
+				for (const node of nodes) {
+					if (!node || processedUrls.has(node.url)) continue;
+					processedUrls.add(node.url);
+					totalScanned++;
 
-			for (const node of nodes) {
-				if (node?.repository?.name) {
-					const repoName = node.repository.name.toLowerCase();
-					const group = repoToGroup.get(repoName);
-					if (group) {
-						statsMap.set(group, (statsMap.get(group) || 0) + 1);
-						totalAccepted++;
+					if (node.repository?.name) {
+						const repoName = node.repository.name.toLowerCase();
+						const group = repoToGroup.get(repoName);
+						if (group) {
+							statsMap.set(group, (statsMap.get(group) || 0) + 1);
+							totalAccepted++;
+						}
 					}
 				}
-			}
 
-			hasNextPage = result.data.search.pageInfo.hasNextPage;
-			cursor = result.data.search.pageInfo.endCursor;
+				hasNextPage = result.data.search.pageInfo.hasNextPage;
+				cursor = result.data.search.pageInfo.endCursor;
+			}
+			console.log(`[GROUPS] Completed interval. Total scanned so far: ${totalScanned}`);
+			currentStart = currentEnd;
 		}
 
 		cachedStats = groups.map((group) => ({
