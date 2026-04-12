@@ -24,6 +24,7 @@ export const REPOS: RepoConfig[] = [
 	{ name: 'iiitl/CargoCut' },
 	{ name: 'iiitl/Bash-Repo-2026' },
 	{ name: 'iiitl/BountyRaffle' },
+	{ name: 'iiitl/CTNFT' },
 	{ name: 'iiitl/Cp_Discord_Bot' },
 	{ name: 'iiitl/cp-rs' },
 	{ name: 'iiitl/Linear-Regression' },
@@ -55,4 +56,5 @@ export const REPOS: RepoConfig[] = [
 	{ name: 'iiitl/MissionSakhi' },
 	{ name: 'iiitl/Crate' },
 	{ name: 'iiitl/Chat-app' },
+	{ name: 'iiitl/ProdditPublic' },
 ];

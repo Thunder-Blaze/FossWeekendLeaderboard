@@ -12,6 +12,7 @@ repos = [
     "Zonic",
     "insane-vitepress",
     "Opensource_Compass",
+    "breach-battle",
     "rjagro",
     "CargoCut",
     "StonkSchool",
@@ -23,7 +24,9 @@ repos = [
     "yt-music-tauri",
     "Chat-app",
     "Crate",
-    "MissionSakhi"
+    "ProdditPublic",
+    "MissionSakhi",
+    "Local-Link"
 ]
 
 [FOSS]
@@ -68,7 +71,8 @@ repos = [
     "Victory-Verse",
     "HeartSync",
     "Drishya",
-    "BountyRaffle"
+    "BountyRaffle",
+    "CTNFT"
 ]
 
 [GIT-BASH]
