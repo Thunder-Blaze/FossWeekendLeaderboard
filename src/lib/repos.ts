@@ -57,4 +57,5 @@ export const REPOS: RepoConfig[] = [
 	{ name: 'iiitl/Crate' },
 	{ name: 'iiitl/Chat-app' },
 	{ name: 'iiitl/ProdditPublic' },
+	{ name: 'iiitl/Event_Dapp' },
 ];

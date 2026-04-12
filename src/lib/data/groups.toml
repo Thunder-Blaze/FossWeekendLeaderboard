@@ -72,6 +72,7 @@ repos = [
     "HeartSync",
     "Drishya",
     "BountyRaffle",
+    "Event_Dapp",
     "CTNFT"
 ]
 
